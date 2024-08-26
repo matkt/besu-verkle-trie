@@ -14,8 +14,7 @@
  *
  */
 package org.hyperledger.besu.ethereum.trie.verkle.visitor;
-
-import org.hyperledger.besu.ethereum.trie.verkle.VerkleTrieBatchHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.VerkleTrieNodeTracker;
 import org.hyperledger.besu.ethereum.trie.verkle.node.InternalNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.LeafNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.Node;
@@ -40,18 +39,18 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
   private Bytes visited; // add consumed bytes to visited
   private Optional<V> oldValue;
 
-  private final Optional<VerkleTrieBatchHasher> batchProcessor;
+  private final Optional<VerkleTrieNodeTracker<V>> verkleTrieNodeTracker;
 
   /**
    * Constructs a new PutVisitor with the provided value to insert or update.
    *
    * @param value The value to be inserted or updated in the Verkle Trie.
    */
-  public PutVisitor(final V value, final Optional<VerkleTrieBatchHasher> batchProcessor) {
+  public PutVisitor(final V value, final Optional<VerkleTrieNodeTracker<V>> verkleTrieNodeTracker) {
     this.value = value;
-    this.visited = Bytes.EMPTY;
+      this.visited = Bytes.EMPTY;
     this.oldValue = Optional.empty();
-    this.batchProcessor = batchProcessor;
+    this.verkleTrieNodeTracker = verkleTrieNodeTracker;
   }
 
   /**
@@ -69,13 +68,13 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     final Node<V> child = internalNode.child(index);
     final Node<V> updatedChild = internalNode.child(index).accept(this, path.slice(1));
     if (child instanceof NullNode<V> || child instanceof NullLeafNode<V>) {
-      batchProcessor.ifPresent(
-          processor -> processor.addNodeToBatch(updatedChild.getLocation(), updatedChild));
+      verkleTrieNodeTracker.ifPresent(
+          processor -> processor.addNodeToBatch(updatedChild));
     }
     internalNode.replaceChild(index, updatedChild);
     if (updatedChild.isDirty()) {
-      batchProcessor.ifPresent(
-          processor -> processor.addNodeToBatch(internalNode.getLocation(), internalNode));
+      verkleTrieNodeTracker.ifPresent(
+          processor -> processor.addNodeToBatch(internalNode));
       internalNode.markDirty();
     }
     return internalNode;
@@ -102,13 +101,13 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
       final Node<V> updatedChild = stemNode.child(index).accept(this, fullPath);
       if (child instanceof NullNode<V> || child instanceof NullLeafNode<V>) {
         // This call may lead to the removal of the node from the batch if a null node is inserted.
-        batchProcessor.ifPresent(
-            processor -> processor.addNodeToBatch(updatedChild.getLocation(), updatedChild));
+        verkleTrieNodeTracker.ifPresent(
+            processor -> processor.addNodeToBatch(updatedChild));
       }
       stemNode.replaceChild(index, updatedChild);
       if (updatedChild.isDirty()) {
-        batchProcessor.ifPresent(
-            processor -> processor.addNodeToBatch(stemNode.getLocation(), stemNode));
+        verkleTrieNodeTracker.ifPresent(
+            processor -> processor.addNodeToBatch(stemNode));
         stemNode.markDirty();
       }
       return stemNode;
@@ -117,13 +116,13 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
       newNode.setPrevious(stemNode.getPrevious());
       final int depth = location.size();
       StemNode<V> updatedStemNode = stemNode.replaceLocation(stem.slice(0, depth + 1));
-      batchProcessor.ifPresent(
-          processor -> processor.addNodeToBatch(updatedStemNode.getLocation(), updatedStemNode));
+      verkleTrieNodeTracker.ifPresent(
+          processor -> processor.addNodeToBatch(updatedStemNode));
 
       newNode.replaceChild(stem.get(depth), updatedStemNode);
       updatedStemNode.markDirty();
-      batchProcessor.ifPresent(
-          processor -> processor.addNodeToBatch(newNode.getLocation(), newNode));
+      verkleTrieNodeTracker.ifPresent(
+          processor -> processor.addNodeToBatch(newNode));
       newNode.markDirty();
       return newNode.accept(this, path);
     }
@@ -143,8 +142,8 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     oldValue = leafNode.getValue();
     if (oldValue != value) {
       newNode = new LeafNode<>(leafNode.getLocation(), value, oldValue);
-      batchProcessor.ifPresent(
-          processor -> processor.addNodeToBatch(newNode.getLocation(), newNode));
+      verkleTrieNodeTracker.ifPresent(
+          processor -> processor.addNodeToBatch(newNode));
       newNode.markDirty();
     } else {
       newNode = leafNode;
@@ -167,8 +166,8 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     final Bytes leafKey = Bytes.concatenate(visited, path);
     final StemNode<V> stemNode = new StemNode<V>(visited, leafKey);
     final Node<V> updatedNode = stemNode.accept(this, path);
-    batchProcessor.ifPresent(
-        processor -> processor.addNodeToBatch(updatedNode.getLocation(), updatedNode));
+    verkleTrieNodeTracker.ifPresent(
+        processor -> processor.addNodeToBatch(updatedNode));
     updatedNode.markDirty();
     return updatedNode;
   }
@@ -185,7 +184,7 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     assert path.size() < 33;
     oldValue = Optional.empty();
     LeafNode<V> newNode = new LeafNode<>(visited, value);
-    batchProcessor.ifPresent(processor -> processor.addNodeToBatch(newNode.getLocation(), newNode));
+    verkleTrieNodeTracker.ifPresent(processor -> processor.addNodeToBatch(newNode));
     newNode.markDirty();
     visited = Bytes.EMPTY;
     return newNode;

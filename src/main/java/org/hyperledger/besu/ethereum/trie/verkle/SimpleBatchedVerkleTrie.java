@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.verkle.node.Node;
 import org.hyperledger.besu.ethereum.trie.verkle.visitor.CommitVisitor;
+import org.hyperledger.besu.ethereum.trie.verkle.visitor.GetVisitor;
 import org.hyperledger.besu.ethereum.trie.verkle.visitor.PutVisitor;
 import org.hyperledger.besu.ethereum.trie.verkle.visitor.RemoveVisitor;
 
@@ -37,33 +38,46 @@ import org.apache.tuweni.bytes.Bytes32;
 public class SimpleBatchedVerkleTrie<K extends Bytes, V extends Bytes>
     extends SimpleVerkleTrie<K, V> implements VerkleTrie<K, V> {
 
-  private final VerkleTrieBatchHasher batchProcessor;
+  protected final VerkleTrieNodeTracker<V> verkleTrieNodeTracker;
 
-  public SimpleBatchedVerkleTrie(final VerkleTrieBatchHasher batchProcessor) {
+  public SimpleBatchedVerkleTrie(final VerkleTrieNodeTracker<V> verkleTrieNodeTracker) {
     super();
-    this.batchProcessor = batchProcessor;
-    this.batchProcessor.addNodeToBatch(Optional.of(Bytes.EMPTY), this.root);
+    this.verkleTrieNodeTracker = verkleTrieNodeTracker;
+    this.verkleTrieNodeTracker.addNodeToBatch(this.root);
   }
 
   public SimpleBatchedVerkleTrie(
-      final Node<V> providedRoot, final VerkleTrieBatchHasher batchProcessor) {
+      final Node<V> providedRoot, final VerkleTrieNodeTracker<V> verkleTrieNodeTracker) {
     super(providedRoot);
-    this.batchProcessor = batchProcessor;
-    this.batchProcessor.addNodeToBatch(root.getLocation(), root);
+    this.verkleTrieNodeTracker = verkleTrieNodeTracker;
+    this.verkleTrieNodeTracker.addNodeToBatch(root);
   }
 
   public SimpleBatchedVerkleTrie(
-      final Optional<Node<V>> maybeRoot, final VerkleTrieBatchHasher batchProcessor) {
+      final Optional<Node<V>> maybeRoot, final VerkleTrieNodeTracker<V> verkleTrieNodeTracker) {
     super(maybeRoot);
-    this.batchProcessor = batchProcessor;
-    this.batchProcessor.addNodeToBatch(root.getLocation(), root);
+    this.verkleTrieNodeTracker = verkleTrieNodeTracker;
+    this.verkleTrieNodeTracker.addNodeToBatch(root);
   }
+
+  @Override
+  public Optional<V> get(final K key) {
+    checkNotNull(key);
+    return root.accept(new GetVisitor<V>(Optional.of(verkleTrieNodeTracker)), key).getValue();
+  }
+
+  @Override
+  public Optional<Node<V>> getNode(final K key) {
+    checkNotNull(key);
+    return verkleTrieNodeTracker.getNodes(key);
+  }
+
 
   @Override
   public Optional<V> put(final K key, final V value) {
     checkNotNull(key);
     checkNotNull(value);
-    PutVisitor<V> visitor = new PutVisitor<>(value, Optional.of(batchProcessor));
+    PutVisitor<V> visitor = new PutVisitor<>(value, Optional.of(verkleTrieNodeTracker));
     this.root = root.accept(visitor, key);
     return visitor.getOldValue();
   }
@@ -71,18 +85,18 @@ public class SimpleBatchedVerkleTrie<K extends Bytes, V extends Bytes>
   @Override
   public void remove(final K key) {
     checkNotNull(key);
-    this.root = root.accept(new RemoveVisitor<V>(Optional.of(batchProcessor)), key);
+    this.root = root.accept(new RemoveVisitor<V>(Optional.of(verkleTrieNodeTracker)), key);
   }
 
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
-    batchProcessor.calculateStateRoot();
+    verkleTrieNodeTracker.calculateStateRoot();
     root = root.accept(new CommitVisitor<V>(nodeUpdater), Bytes.EMPTY);
   }
 
   @Override
   public Bytes32 getRootHash() {
-    batchProcessor.calculateStateRoot();
+    verkleTrieNodeTracker.calculateStateRoot();
     return root.getHash().get();
   }
 }

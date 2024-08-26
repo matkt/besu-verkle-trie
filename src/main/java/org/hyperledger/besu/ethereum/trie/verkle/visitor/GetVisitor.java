@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.verkle.visitor;
 
+import org.hyperledger.besu.ethereum.trie.verkle.VerkleTrieNodeTracker;
 import org.hyperledger.besu.ethereum.trie.verkle.node.InternalNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.Node;
 import org.hyperledger.besu.ethereum.trie.verkle.node.NullLeafNode;
@@ -22,6 +23,8 @@ import org.hyperledger.besu.ethereum.trie.verkle.node.NullNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.StemNode;
 
 import org.apache.tuweni.bytes.Bytes;
+
+import java.util.Optional;
 
 /**
  * Class representing a visitor for traversing nodes in a Trie tree to find a node based on a path.
@@ -31,7 +34,13 @@ import org.apache.tuweni.bytes.Bytes;
 public class GetVisitor<V> implements PathNodeVisitor<V> {
   private final Node<V> NULL_NODE_RESULT = new NullLeafNode<>();
 
-  /**
+  private final Optional<VerkleTrieNodeTracker<V>> verkleTrieNodeTracker;
+
+    public GetVisitor(final Optional<VerkleTrieNodeTracker<V>> verkleTrieNodeTracker) {
+        this.verkleTrieNodeTracker = verkleTrieNodeTracker;
+    }
+
+    /**
    * Visits a internalNode to determine the node matching a given path.
    *
    * @param internalNode The internalNode being visited.
@@ -40,6 +49,12 @@ public class GetVisitor<V> implements PathNodeVisitor<V> {
    */
   @Override
   public Node<V> visit(final InternalNode<V> internalNode, final Bytes path) {
+    this.verkleTrieNodeTracker.ifPresent(verkleTrieNodeTracker -> {
+      verkleTrieNodeTracker.addNodeToBatch(internalNode);
+    });
+    if(path.isEmpty()){
+      return internalNode;
+    }
     final byte childIndex = path.get(0);
     return internalNode.child(childIndex).accept(this, path.slice(1));
   }
@@ -53,6 +68,12 @@ public class GetVisitor<V> implements PathNodeVisitor<V> {
    */
   @Override
   public Node<V> visit(final StemNode<V> stemNode, final Bytes path) {
+    this.verkleTrieNodeTracker.ifPresent(verkleTrieNodeTracker -> {
+      verkleTrieNodeTracker.addNodeToBatch(stemNode);
+    });
+    if(path.isEmpty()){
+      return stemNode;
+    }
     final Bytes extension = stemNode.getPathExtension().get();
     final int prefix = path.commonPrefixLength(extension);
     if (prefix < extension.size()) {

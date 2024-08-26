@@ -37,7 +37,7 @@ public class StoredVerkleTrie<K extends Bytes, V extends Bytes> extends SimpleVe
    * @param nodeFactory The {@link NodeFactory} to retrieve node.
    */
   public StoredVerkleTrie(final NodeFactory<V> nodeFactory) {
-    super(nodeFactory.retrieve(Bytes.EMPTY, null));
+    super(nodeFactory.retrieve(Bytes.EMPTY));
     this.nodeFactory = nodeFactory;
   }
 }

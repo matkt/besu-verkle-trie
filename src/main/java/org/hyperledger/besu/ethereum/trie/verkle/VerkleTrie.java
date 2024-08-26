@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.verkle.node.Node;
 
 /** Verkle Trie. */
 public interface VerkleTrie<K, V> {
@@ -32,7 +33,9 @@ public interface VerkleTrie<K, V> {
    */
   Optional<V> get(K key);
 
-  /**
+  Optional<Node<V>> getNode(K key);
+
+    /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist.
    *

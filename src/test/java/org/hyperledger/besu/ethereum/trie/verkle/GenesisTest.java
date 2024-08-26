@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -56,10 +57,10 @@ public class GenesisTest {
   public void putGenesis(String genesisCSVFile, String expectedStateRootHash) throws IOException {
     HashMap<Bytes, Bytes> storage = new HashMap<Bytes, Bytes>();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
-    StoredNodeFactory<Bytes> nodeFactory = new StoredNodeFactory<>(nodeLoader, value -> value);
+    VerkleTrieNodeTracker<Bytes> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes>();
+    StoredNodeFactory<Bytes> nodeFactory = new StoredNodeFactory<>(nodeLoader, value -> value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes> trie =
-        new StoredBatchedVerkleTrie<>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<>(verkleTrieNodeTracker, nodeFactory);
     InputStream input = GenesisTest.class.getResourceAsStream(genesisCSVFile);
     try (Reader reader = new InputStreamReader(input, "UTF-8");
         CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT); ) {

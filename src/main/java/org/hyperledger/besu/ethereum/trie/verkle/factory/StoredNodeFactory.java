@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.trie.verkle.factory;
 
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
+import org.hyperledger.besu.ethereum.trie.verkle.VerkleTrieNodeTracker;
 import org.hyperledger.besu.ethereum.trie.verkle.node.InternalNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.LeafNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.Node;
@@ -47,6 +48,7 @@ enum NodeType {
 public class StoredNodeFactory<V> implements NodeFactory<V> {
   private final NodeLoader nodeLoader;
   private final Function<Bytes, V> valueDeserializer;
+  private final Optional<VerkleTrieNodeTracker<V>> verkleTrieNodeTracker;
 
   /**
    * Creates a new StoredNodeFactory with the given node loader and value deserializer.
@@ -54,26 +56,40 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
    * @param nodeLoader The loader for retrieving stored nodes.
    * @param valueDeserializer The function to deserialize values from Bytes.
    */
+  public StoredNodeFactory(NodeLoader nodeLoader, Function<Bytes, V> valueDeserializer, final Optional<VerkleTrieNodeTracker<V>> verkleTrieNodeTracker) {
+    this.nodeLoader = nodeLoader;
+    this.valueDeserializer = valueDeserializer;
+      this.verkleTrieNodeTracker = verkleTrieNodeTracker;
+  }
+
+
   public StoredNodeFactory(NodeLoader nodeLoader, Function<Bytes, V> valueDeserializer) {
     this.nodeLoader = nodeLoader;
     this.valueDeserializer = valueDeserializer;
+    this.verkleTrieNodeTracker = Optional.empty();
   }
 
   /**
    * Retrieves a Verkle Trie node from stored data based on the location and hash.
    *
    * @param location Node's location
-   * @param hash Node's hash
    * @return An optional containing the retrieved node, or an empty optional if the node is not
-   *     found.
+   * found.
    */
   @Override
-  public Optional<Node<V>> retrieve(final Bytes location, final Bytes32 hash) {
+  public Optional<Node<V>> retrieve(final Bytes location) {
     /* Currently, Root and Leaf are distinguishable by location.
      * To distinguish internal from stem, we further need values.
      * Currently, they are distinguished by values length.
      */
-    Optional<Bytes> optionalEncodedValues = nodeLoader.getNode(location, hash);
+    if(verkleTrieNodeTracker.isPresent()){
+      final Optional<Node<V>> node = verkleTrieNodeTracker.get().getNodes(location);
+      if(node.isPresent()){
+        return node;
+      }
+    }
+    Optional<Bytes> optionalEncodedValues =
+            nodeLoader.getNode(location, null);
     if (optionalEncodedValues.isEmpty()) {
       return Optional.empty();
     }

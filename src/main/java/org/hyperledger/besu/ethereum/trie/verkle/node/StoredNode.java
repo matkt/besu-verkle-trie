@@ -174,7 +174,7 @@ public class StoredNode<V> extends Node<V> {
 
   private Node<V> load() {
     if (loadedNode.isEmpty()) {
-      loadedNode = nodeFactory.retrieve(location, null);
+      loadedNode = nodeFactory.retrieve(location);
     }
     if (loadedNode.isPresent()) {
       return loadedNode.get();

@@ -26,6 +26,9 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.trie.verkle.node.LeafNode;
+import org.hyperledger.besu.ethereum.trie.verkle.node.Node;
+import org.hyperledger.besu.ethereum.trie.verkle.node.StemNode;
 import org.junit.jupiter.api.Test;
 
 public class StoredBatchedVerkleTrieTest {
@@ -34,15 +37,15 @@ public class StoredBatchedVerkleTrieTest {
   public void testEmptyTrie() {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+            new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     trie.commit(nodeUpdater);
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> storedTrie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     assertThat(storedTrie.getRootHash()).isEqualTo(trie.getRootHash());
   }
 
@@ -50,11 +53,11 @@ public class StoredBatchedVerkleTrieTest {
   public void testOneValue() {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+            new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     Bytes32 key =
         Bytes32.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     Bytes32 value =
@@ -63,7 +66,7 @@ public class StoredBatchedVerkleTrieTest {
     trie.commit(nodeUpdater);
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> storedTrie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     assertThat(storedTrie.getRootHash()).isEqualTo(trie.getRootHash());
     assertThat(storedTrie.get(key).orElse(null)).as("Retrieved value").isEqualTo(value);
   }
@@ -72,11 +75,11 @@ public class StoredBatchedVerkleTrieTest {
   public void testDeleteAlreadyDeletedValue() {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+            new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     Bytes32 key =
         Bytes32.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     Bytes32 value =
@@ -85,7 +88,7 @@ public class StoredBatchedVerkleTrieTest {
     trie.remove(key);
     trie.remove(key);
     StoredBatchedVerkleTrie<Bytes32, Bytes32> storedTrie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     assertThat(storedTrie.getRootHash()).isEqualTo(Bytes32.ZERO);
   }
 
@@ -93,11 +96,11 @@ public class StoredBatchedVerkleTrieTest {
   public void testTwoValuesAtSameStem() throws Exception {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     Bytes32 key1 =
         Bytes32.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     Bytes32 value1 =
@@ -111,7 +114,7 @@ public class StoredBatchedVerkleTrieTest {
     trie.commit(nodeUpdater);
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> storedTrie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     assertThat(storedTrie.getRootHash()).isEqualTo(trie.getRootHash());
     assertThat(storedTrie.get(key1).orElse(null)).isEqualTo(value1);
     assertThat(storedTrie.get(key2).orElse(null)).isEqualTo(value2);
@@ -121,11 +124,11 @@ public class StoredBatchedVerkleTrieTest {
   public void testTwoValuesAtDifferentIndex() throws Exception {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     Bytes32 key1 =
         Bytes32.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     Bytes32 value1 =
@@ -139,7 +142,7 @@ public class StoredBatchedVerkleTrieTest {
     trie.commit(nodeUpdater);
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> storedTrie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     assertThat(storedTrie.getRootHash()).isEqualTo(trie.getRootHash());
     assertThat(storedTrie.get(key1).orElse(null)).isEqualTo(value1);
     assertThat(storedTrie.get(key2).orElse(null)).isEqualTo(value2);
@@ -149,11 +152,11 @@ public class StoredBatchedVerkleTrieTest {
   public void testTwoValuesWithDivergentStemsAtDepth2() throws Exception {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     Bytes32 key1 =
         Bytes32.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     Bytes32 value1 =
@@ -167,7 +170,7 @@ public class StoredBatchedVerkleTrieTest {
     trie.commit(nodeUpdater);
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> storedTrie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     assertThat(storedTrie.getRootHash()).isEqualTo(trie.getRootHash());
     assertThat(storedTrie.get(key1).orElse(null)).isEqualTo(value1);
     assertThat(storedTrie.get(key2).orElse(null)).isEqualTo(value2);
@@ -177,11 +180,11 @@ public class StoredBatchedVerkleTrieTest {
   public void testDeleteThreeValues() throws Exception {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     Bytes32 key1 =
         Bytes32.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     Bytes32 value1 =
@@ -200,7 +203,7 @@ public class StoredBatchedVerkleTrieTest {
     trie.commit(nodeUpdater);
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> storedTrie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     assertThat(storedTrie.getRootHash()).isEqualTo(trie.getRootHash());
     assertThat(storedTrie.get(key1).orElse(null)).isEqualTo(value1);
     assertThat(storedTrie.get(key2).orElse(null)).isEqualTo(value2);
@@ -211,11 +214,11 @@ public class StoredBatchedVerkleTrieTest {
   public void testDeleteThreeValuesWithFlattening() throws Exception {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+            new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     Bytes32 key1 =
         Bytes32.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     Bytes32 value1 =
@@ -234,7 +237,7 @@ public class StoredBatchedVerkleTrieTest {
     trie.commit(nodeUpdater);
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> storedTrie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     assertThat(storedTrie.getRootHash()).isEqualTo(trie.getRootHash());
     assertThat(storedTrie.get(key1).orElse(null)).isEqualTo(value1);
     assertThat(storedTrie.get(key2).orElse(null)).isEqualTo(value2);
@@ -245,12 +248,12 @@ public class StoredBatchedVerkleTrieTest {
   public void testDeleteManyValuesWithDivergentStemsAtDepth2() throws Exception {
     final Map<Bytes, Bytes> map = new HashMap<>();
 
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    VerkleTrieNodeTracker<Bytes> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes>();
     StoredBatchedVerkleTrie<Bytes, Bytes> trie =
         new StoredBatchedVerkleTrie<>(
-            batchProcessor,
+            verkleTrieNodeTracker,
             new StoredNodeFactory<>(
-                (location, hash) -> Optional.ofNullable(map.get(location)), value -> value));
+                (location, hash) -> Optional.ofNullable(map.get(location)), value -> value, Optional.of(verkleTrieNodeTracker)));
 
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
     Bytes32 key0 =
@@ -286,6 +289,16 @@ public class StoredBatchedVerkleTrieTest {
     trie.put(key5, value5);
     trie.put(key6, value6);
 
+    Optional<Node<Bytes>> node = trie.getNode(Bytes.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c456"));
+    node.ifPresent(bytesNode -> {
+      StemNode<Bytes> stemNode = (StemNode<Bytes>) bytesNode;
+      LeafNode<Bytes> leafNode = (LeafNode<Bytes>) stemNode.getChildren().get(0);
+      stemNode.replaceChild((byte) 0, new LeafNode<Bytes>(leafNode.getLocation(), Bytes32.rightPad(Bytes.of(2)),leafNode.getPrevious() ));
+      System.out.println(leafNode.getValue()+" "+leafNode.getLocation());
+    });
+
+    System.out.println(trie.getNode(Bytes.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c456")));
+
     trie.commit(
         new NodeUpdater() {
           @Override
@@ -293,11 +306,12 @@ public class StoredBatchedVerkleTrieTest {
             map.put(location, value);
           }
         });
+    System.out.println(trie.getRootHash());
     StoredBatchedVerkleTrie<Bytes, Bytes> trie2 =
         new StoredBatchedVerkleTrie<>(
-            batchProcessor,
+            verkleTrieNodeTracker,
             new StoredNodeFactory<>(
-                (location, hash) -> Optional.ofNullable(map.get(location)), value -> value));
+                (location, hash) -> Optional.ofNullable(map.get(location)), value -> value, Optional.of(verkleTrieNodeTracker)));
     assertThat(trie2.getRootHash()).isEqualTo(trie.getRootHash());
     trie2.remove(key0);
     trie2.remove(key4);
@@ -313,11 +327,11 @@ public class StoredBatchedVerkleTrieTest {
   public void testAddAndRemoveKeysWithMultipleTreeReloads() throws Exception {
     NodeUpdaterMock nodeUpdater = new NodeUpdaterMock();
     NodeLoaderMock nodeLoader = new NodeLoaderMock(nodeUpdater.storage);
-    VerkleTrieBatchHasher batchProcessor = new VerkleTrieBatchHasher();
+    final VerkleTrieNodeTracker<Bytes32> verkleTrieNodeTracker = new VerkleTrieNodeTracker<Bytes32>();
     StoredNodeFactory<Bytes32> nodeFactory =
-        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value);
+        new StoredNodeFactory<>(nodeLoader, value -> (Bytes32) value, Optional.of(verkleTrieNodeTracker));
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
 
     trie.put(
         Bytes32.fromHexString("0x1123356d04d4bd662ba38c44cbd79d4108521284d80327fa533e0baab1af9fff"),
@@ -327,7 +341,7 @@ public class StoredBatchedVerkleTrieTest {
     Bytes32 expectedRootHash = trie.getRootHash();
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie2 =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     trie2.put(
         Bytes32.fromHexString("0x117b67dd491b9e11d9cde84ef3c02f11ddee9e18284969dc7d496d43c300e500"),
         Bytes32.fromHexString(
@@ -336,7 +350,7 @@ public class StoredBatchedVerkleTrieTest {
     trie2.commit(nodeUpdater);
 
     StoredBatchedVerkleTrie<Bytes32, Bytes32> trie3 =
-        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(batchProcessor, nodeFactory);
+        new StoredBatchedVerkleTrie<Bytes32, Bytes32>(verkleTrieNodeTracker, nodeFactory);
     trie3.remove(
         Bytes32.fromHexString(
             "0x117b67dd491b9e11d9cde84ef3c02f11ddee9e18284969dc7d496d43c300e500"));

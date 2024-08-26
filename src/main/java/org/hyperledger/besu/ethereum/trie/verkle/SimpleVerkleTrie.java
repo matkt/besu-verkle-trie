@@ -85,7 +85,13 @@ public class SimpleVerkleTrie<K extends Bytes, V extends Bytes> implements Verkl
   @Override
   public Optional<V> get(final K key) {
     checkNotNull(key);
-    return root.accept(new GetVisitor<V>(), key).getValue();
+    return root.accept(new GetVisitor<V>(Optional.empty()), key).getValue();
+  }
+
+  @Override
+  public Optional<Node<V>> getNode(final K key) {
+    checkNotNull(key);
+    return Optional.of(root.accept(new GetVisitor<V>(Optional.empty()), key));
   }
 
   /**

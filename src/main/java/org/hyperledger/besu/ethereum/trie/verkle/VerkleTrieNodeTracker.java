@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.verkle.node.BranchNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.InternalNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.LeafNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.Node;
-import org.hyperledger.besu.ethereum.trie.verkle.node.NullLeafNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.NullNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.StemNode;
 import org.hyperledger.besu.ethereum.trie.verkle.node.StoredNode;
@@ -46,32 +45,52 @@ import org.apache.tuweni.bytes.Bytes32;
  *
  * <p>This class manages the batching and hashing of trie nodes to optimize performance.
  */
-public class VerkleTrieBatchHasher {
+public class VerkleTrieNodeTracker<V> {
 
-  private static final Logger LOG = LogManager.getLogger(VerkleTrieBatchHasher.class);
+  private static final Logger LOG = LogManager.getLogger(VerkleTrieNodeTracker.class);
   private static final int MAX_BATCH_SIZE = 1000; // Maximum number of nodes in a batch
   private static final Bytes[] EMPTY_ARRAY_TEMPLATE = new Bytes[0];
   private final Hasher hasher = new PedersenHasher(); // Hasher for node hashing
-  private final Map<Bytes, Node<?>> updatedNodes =
-      new HashMap<>(); // Map to hold nodes for batching
+  private final Map<Bytes, Node<V>> touchNodes =
+      new HashMap<>();
+  private final List<Bytes> deletedNodes =
+          new ArrayList<>();
 
   /**
-   * Adds a node for future batching. If the node is a NullNode or NullLeafNode and the location is
-   * not empty, it removes the node from the batch.
+   * Adds a node for future batching.
    *
-   * @param maybeLocation The location of the node.
    * @param node The node to add.
    */
-  public void addNodeToBatch(final Optional<Bytes> maybeLocation, final Node<?> node) {
-    maybeLocation.ifPresent(
-        location -> {
-          if ((node instanceof NullNode<?> || node instanceof NullLeafNode<?>)
-              && !location.isEmpty()) {
-            updatedNodes.remove(location);
-          } else {
-            updatedNodes.put(location, node);
-          }
-        });
+  public void addNodeToBatch(final Node<V> node) {
+    if(node instanceof StemNode<V> stemNode){
+      touchNodes.put(stemNode.getStem(), node);
+      deletedNodes.remove(stemNode.getStem());
+      node.getLocation().ifPresent(
+              location -> {
+                touchNodes.remove(location);
+                deletedNodes.add(location);
+              });
+    } else {
+      node.getLocation().ifPresent(
+              location -> {
+                touchNodes.put(location, node);
+                deletedNodes.remove(location);
+              });
+    }
+
+  }
+
+  public void removeNodeFromBatch(final Node<V> node) {
+    if(node instanceof StemNode<V> stemNode){
+      touchNodes.remove(stemNode.getStem());
+      deletedNodes.add(stemNode.getStem());
+    } else {
+      node.getLocation().ifPresent(
+              location -> {
+                touchNodes.remove(location);
+                deletedNodes.add(location);
+              });
+    }
   }
 
   /**
@@ -79,8 +98,12 @@ public class VerkleTrieBatchHasher {
    *
    * @return Map of nodes to be batched.
    */
-  public Map<Bytes, Node<?>> getNodesToBatch() {
-    return updatedNodes;
+  public Map<Bytes, Node<V>> getNodesToBatch() {
+    return touchNodes;
+  }
+
+  public Optional<Node<V>> getNodes(final Bytes key) {
+    return Optional.ofNullable(touchNodes.get(key));
   }
 
   /**
@@ -88,22 +111,22 @@ public class VerkleTrieBatchHasher {
    * Clears the batch after processing.
    */
   public void calculateStateRoot() {
-    if (updatedNodes.isEmpty()) {
+    if (touchNodes.isEmpty()) {
       return;
     }
 
-    final List<Map.Entry<Bytes, Node<?>>> sortedNodesByLocation =
-        new ArrayList<>(updatedNodes.entrySet());
+    final List<Map.Entry<Bytes, Node<V>>> sortedNodesByLocation =
+        new ArrayList<>(touchNodes.entrySet());
     sortedNodesByLocation.sort(
         (entry1, entry2) -> Integer.compare(entry2.getKey().size(), entry1.getKey().size()));
 
     int currentDepth = -1; // Tracks the depth of the current batch
 
-    final List<Node<?>> nodesInSameLevel = new ArrayList<>();
-    for (Map.Entry<Bytes, Node<?>> entry : sortedNodesByLocation) {
+    final List<Node<V>> nodesInSameLevel = new ArrayList<>();
+    for (Map.Entry<Bytes, Node<V>> entry : sortedNodesByLocation) {
       final Bytes location = entry.getKey();
-      final Node<?> node = entry.getValue();
-      if (node instanceof BranchNode<?>) {
+      final Node<V> node = entry.getValue();
+      if (node instanceof BranchNode<V>) {
         if (location.size() != currentDepth || nodesInSameLevel.size() > MAX_BATCH_SIZE) {
           if (!nodesInSameLevel.isEmpty()) {
             processBatch(nodesInSameLevel);
@@ -112,17 +135,17 @@ public class VerkleTrieBatchHasher {
           if (location.isEmpty()) {
             // We will end up updating the root node. Once all the batching is finished,
             // we will update the previous states of the nodes by setting them to the new ones.
-            calculateRootInternalNodeHash((InternalNode<?>) node);
-            updatedNodes.forEach(
+            calculateRootInternalNodeHash((InternalNode<V>) node);
+            touchNodes.forEach(
                 (__, n) -> {
-                  if (n instanceof BranchNode<?>) {
+                  if (n instanceof BranchNode<V>) {
                     n.setPrevious(n.getHash());
-                  } else if (n instanceof LeafNode<?>) {
+                  } else if (n instanceof LeafNode<V>) {
                     n.setPrevious(n.getValue());
                   }
                   n.markClean();
                 });
-            updatedNodes.clear();
+            touchNodes.clear();
             return;
           }
           currentDepth = location.size();
@@ -136,16 +159,16 @@ public class VerkleTrieBatchHasher {
     throw new IllegalStateException("root node not found");
   }
 
-  private void processBatch(List<Node<?>> nodes) {
+  private void processBatch(List<Node<V>> nodes) {
     LOG.atTrace().log("Start hashing {} batch of nodes", nodes.size());
     List<Bytes> commitments = new ArrayList<>();
 
     LOG.atTrace().log("Creating commitments for stem nodes and internal nodes");
-    for (final Node<?> node : nodes) {
-      if (node instanceof StemNode<?>) {
-        commitments.addAll(getStemNodeLeftRightCommitments((StemNode<?>) node));
-      } else if (node instanceof InternalNode<?>) {
-        commitments.addAll(getInternalNodeCommitments((InternalNode<?>) node));
+    for (final Node<V> node : nodes) {
+      if (node instanceof StemNode<V>) {
+        commitments.addAll(getStemNodeLeftRightCommitments((StemNode<V>) node));
+      } else if (node instanceof InternalNode<V>) {
+        commitments.addAll(getInternalNodeCommitments((InternalNode<V>) node));
       }
     }
 
@@ -162,12 +185,12 @@ public class VerkleTrieBatchHasher {
 
     LOG.atTrace()
         .log("Creating commitments for stem nodes and refreshing hashes of internal nodes");
-    for (final Node<?> node : nodes) {
-      if (node instanceof StemNode<?>) {
+    for (final Node<V> node : nodes) {
+      if (node instanceof StemNode<V>) {
         commitments.add(
-            getStemNodeCommitment((StemNode<?>) node, commitmentsIterator, hashesIterator));
-      } else if (node instanceof InternalNode<?>) {
-        calculateInternalNodeHashes((InternalNode<?>) node, commitmentsIterator, hashesIterator);
+            getStemNodeCommitment((StemNode<V>) node, commitmentsIterator, hashesIterator));
+      } else if (node instanceof InternalNode<V>) {
+        calculateInternalNodeHashes((InternalNode<V>) node, commitmentsIterator, hashesIterator);
       }
     }
     LOG.atTrace()
@@ -176,21 +199,21 @@ public class VerkleTrieBatchHasher {
     hashesIterator = hasher.hashMany(commitments.toArray(EMPTY_ARRAY_TEMPLATE)).iterator();
 
     LOG.atTrace().log("Refreshing hashes of stem nodes");
-    for (final Node<?> node : nodes) {
-      if (node instanceof StemNode<?>) {
-        calculateStemNodeHashes((StemNode<?>) node, commitmentsIterator, hashesIterator);
+    for (final Node<V> node : nodes) {
+      if (node instanceof StemNode<V>) {
+        calculateStemNodeHashes((StemNode<V>) node, commitmentsIterator, hashesIterator);
       }
     }
     LOG.atTrace().log("Finished refreshing hashes of stem nodes");
   }
 
-  private void calculateRootInternalNodeHash(final InternalNode<?> internalNode) {
+  private void calculateRootInternalNodeHash(final InternalNode<V> internalNode) {
     final Bytes32 hash = Bytes32.wrap(getRootNodeCommitments(internalNode).get(0));
     internalNode.replaceHash(hash, hash);
   }
 
   private void calculateStemNodeHashes(
-      final StemNode<?> stemNode,
+      final StemNode<V> stemNode,
       final Iterator<Bytes> commitmentsIterator,
       final Iterator<Bytes32> hashesIterator) {
     final Bytes32 hash = hashesIterator.next();
@@ -205,13 +228,13 @@ public class VerkleTrieBatchHasher {
   }
 
   private void calculateInternalNodeHashes(
-      final InternalNode<?> internalNode,
+      final InternalNode<V> internalNode,
       final Iterator<Bytes> commitmentsIterator,
       final Iterator<Bytes32> hashesIterator) {
     internalNode.replaceHash(hashesIterator.next(), commitmentsIterator.next());
   }
 
-  private List<Bytes> getStemNodeLeftRightCommitments(StemNode<?> stemNode) {
+  private List<Bytes> getStemNodeLeftRightCommitments(StemNode<V> stemNode) {
     int size = StemNode.maxChild();
     List<Bytes> commitmentsHashes = new ArrayList<>();
 
@@ -226,14 +249,14 @@ public class VerkleTrieBatchHasher {
     int halfSize = size / 2;
 
     for (int idx = 0; idx < size; idx++) {
-      Node<?> node = stemNode.child((byte) idx);
+      Node<V> node = stemNode.child((byte) idx);
 
       Optional<Bytes> oldValue = node.getPrevious().map(Bytes.class::cast);
       // We should not recalculate a node if it is persisted and has not undergone an update since
       // its last save.
       // If a child does not have a previous value, it means that it is a new node and we must
       // therefore recalculate it.
-      if (!(node instanceof StoredNode<?>) && (oldValue.isEmpty() || node.isDirty())) {
+      if (!(node instanceof StoredNode<V>) && (oldValue.isEmpty() || node.isDirty())) {
         if (idx < halfSize) {
           leftIndices.add((byte) (2 * idx));
           leftIndices.add((byte) (2 * idx + 1));
@@ -277,7 +300,7 @@ public class VerkleTrieBatchHasher {
   }
 
   private Bytes getStemNodeCommitment(
-      final StemNode<?> stemNode,
+      final StemNode<V> stemNode,
       final Iterator<Bytes> commitmentsIterator,
       final Iterator<Bytes32> iterator) {
     Bytes32[] hashes = new Bytes32[4];
@@ -290,7 +313,7 @@ public class VerkleTrieBatchHasher {
     return hasher.commit(hashes);
   }
 
-  private List<Bytes> getInternalNodeCommitments(InternalNode<?> internalNode) {
+  private List<Bytes> getInternalNodeCommitments(InternalNode<V> internalNode) {
     int size = InternalNode.maxChild();
     final List<Bytes> commitmentsHashes = new ArrayList<>();
 
@@ -298,13 +321,13 @@ public class VerkleTrieBatchHasher {
     final List<Bytes> oldValues = new ArrayList<>();
     final List<Bytes> newValues = new ArrayList<>();
     for (int i = 0; i < size; i++) {
-      final Node<?> node = internalNode.child((byte) i);
+      final Node<V> node = internalNode.child((byte) i);
       Optional<Bytes> oldValue = node.getPrevious().map(Bytes.class::cast);
       // We should not recalculate a node if it is persisted and has not undergone an update since
       // its last save.
       // If a child does not have a previous value, it means that it is a new node and we must
       // therefore recalculate it.
-      if (!(node instanceof StoredNode<?>) && (oldValue.isEmpty() || node.isDirty())) {
+      if (!(node instanceof StoredNode<V>) && (oldValue.isEmpty() || node.isDirty())) {
         indices.add((byte) i);
         oldValues.add(oldValue.orElse(Bytes.EMPTY));
         newValues.add(node.getHash().get());
@@ -315,12 +338,12 @@ public class VerkleTrieBatchHasher {
     return commitmentsHashes;
   }
 
-  private List<Bytes> getRootNodeCommitments(InternalNode<?> internalNode) {
+  private List<Bytes> getRootNodeCommitments(InternalNode<V> internalNode) {
     int size = InternalNode.maxChild();
     final List<Bytes> commitmentsHashes = new ArrayList<>();
     final List<Bytes> newValues = new ArrayList<>();
     for (int i = 0; i < size; i++) {
-      final Node<?> node = internalNode.child((byte) i);
+      final Node<V> node = internalNode.child((byte) i);
       newValues.add(node.getHash().get());
     }
     commitmentsHashes.add(hasher.commitRoot(newValues.toArray(new Bytes[] {})));

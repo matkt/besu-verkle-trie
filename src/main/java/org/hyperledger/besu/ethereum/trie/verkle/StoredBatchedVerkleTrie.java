@@ -18,6 +18,11 @@ package org.hyperledger.besu.ethereum.trie.verkle;
 import org.hyperledger.besu.ethereum.trie.verkle.factory.NodeFactory;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.trie.verkle.node.Node;
+
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Implements a Verkle Trie that batches node hashing by level.
@@ -33,12 +38,22 @@ public class StoredBatchedVerkleTrie<K extends Bytes, V extends Bytes>
   /**
    * Constructs a new trie with a node factory and batch processor.
    *
-   * @param batchProcessor The processor for batching node hashing.
+   * @param verkleTrieNodeTracker The processor for batching node hashing.
    * @param nodeFactory The {@link NodeFactory} to retrieve node.
    */
   public StoredBatchedVerkleTrie(
-      final VerkleTrieBatchHasher batchProcessor, final NodeFactory<V> nodeFactory) {
-    super(nodeFactory.retrieve(Bytes.EMPTY, null), batchProcessor);
+          final VerkleTrieNodeTracker<V> verkleTrieNodeTracker, final NodeFactory<V> nodeFactory) {
+    super(nodeFactory.retrieve(Bytes.EMPTY), verkleTrieNodeTracker);
     this.nodeFactory = nodeFactory;
+  }
+
+  @Override
+  public Optional<Node<V>> getNode(final K key) {
+    checkNotNull(key);
+    return verkleTrieNodeTracker.getNodes(key).or(() ->{
+      final Optional<Node<V>> retrieve = nodeFactory.retrieve(key);
+      retrieve.ifPresent(verkleTrieNodeTracker::addNodeToBatch);
+      return retrieve;
+    });
   }
 }
