@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.stateless.bintrie.node;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.NodeVisitor;
-import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.PathNodeVisitor;
 
 import java.util.Optional;
 
@@ -82,18 +81,6 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
     super(location, commitment);
     this.left = left;
     this.right = right;
-  }
-
-  /**
-   * Accepts a visitor for path-based operations on the node.
-   *
-   * @param visitor The path node visitor.
-   * @param path The path associated with a node.
-   * @return The result of the visitor's operation.
-   */
-  @Override
-  public Node<K, V> accept(PathNodeVisitor<K, V> visitor, BitSequence<K> path) {
-    return visitor.visit(this, path);
   }
 
   /**

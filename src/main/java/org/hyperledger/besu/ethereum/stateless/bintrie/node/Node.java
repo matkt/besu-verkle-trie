@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.stateless.bintrie.node;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.NodeVisitor;
-import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.PathNodeVisitor;
 
 import java.util.Optional;
 
@@ -25,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * An interface representing a node in the Verkle Trie.
+ * An abstract class representing a node in the Verkle Trie.
  *
  * @param <K> The type of node's location.
  * @param <V> The type of the node's value.
@@ -73,15 +72,6 @@ public abstract class Node<K extends BitSequence<K>, V> {
     this.location = location;
     this.commitment = commitment;
   }
-
-  /**
-   * Accept a visitor to perform operations on the node based on a provided path.
-   *
-   * @param visitor The visitor to accept.
-   * @param path The path associated with a node.
-   * @return The result of visitor's operation.
-   */
-  public abstract Node<K, V> accept(PathNodeVisitor<K, V> visitor, BitSequence<K> path);
 
   /**
    * Accept a visitor to perform operations on the node.

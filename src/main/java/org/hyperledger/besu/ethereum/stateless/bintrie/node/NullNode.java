@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.stateless.bintrie.node;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.NodeVisitor;
-import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.PathNodeVisitor;
 
 import java.util.Optional;
 
@@ -33,18 +32,6 @@ import org.apache.tuweni.bytes.Bytes;
 public class NullNode<K extends BitSequence<K>, V> extends Node<K, V> {
   private NullNode() {
     super(Optional.empty(), Optional.of(EMPTY_COMMITMENT));
-  }
-
-  /**
-   * Accepts a visitor for path-based operations on the node.
-   *
-   * @param visitor The path node visitor.
-   * @param path The path associated with a node.
-   * @return The result of the visitor's operation.
-   */
-  @Override
-  public Node<K, V> accept(PathNodeVisitor<K, V> visitor, BitSequence<K> path) {
-    return visitor.visit(this, path);
   }
 
   /**

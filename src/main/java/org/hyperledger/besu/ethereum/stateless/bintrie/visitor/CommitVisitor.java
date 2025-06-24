@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.stateless.bintrie.visitor;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
+import org.hyperledger.besu.ethereum.stateless.bintrie.NodeUpdater;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.InternalNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.LeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
@@ -30,18 +31,22 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
  * @param <K> The type of node's location.
  * @param <V> The type of node values.
  */
-public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
+public class CommitVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
+  /** The NodeUpdater used to store changes in the Trie structure. */
+  protected final NodeUpdater nodeUpdater;
+
   public final BitSequence<K> path;
   private int depth;
 
-  public GetVisitor(final BitSequence<K> path) {
+  public CommitVisitor(final NodeUpdater nodeUpdater, final BitSequence<K> path) {
     if (path == null) {
-      throw new IllegalArgumentException("GetVisitor's path cannot be null");
+      throw new IllegalArgumentException("CommitVisitor's path cannot be null");
     }
     if (path.length() > Node.KEY_SIZE) {
       throw new IllegalArgumentException(
-          String.format("GetVisitor's path's size cannot be more than %s", Node.KEY_SIZE));
+          String.format("CommitVisitor's path's size cannot be more than %s", Node.KEY_SIZE));
     }
+    this.nodeUpdater = nodeUpdater;
     this.path = path;
     this.depth = -1;
   }
@@ -58,9 +63,7 @@ public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    */
   @Override
   public Node<K, V> visit(InternalNode<K, V> internalNode) {
-    depth++;
-    Node<K, V> child = path.get(depth) ? internalNode.right : internalNode.left;
-    return child.accept(this);
+    throw new UnsupportedOperationException("TODO");
   }
 
   /**
@@ -71,13 +74,7 @@ public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    */
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
-    depth++;
-    final BitSequence<K> prefix = path.commonPrefix(stemNode.stem);
-    if (prefix.length() < stemNode.stem.length()) {
-      return NullNode.nullNode();
-    }
-    int suffix = path.slice(Node.STEM_SIZE).toInt();
-    return stemNode.child(suffix).accept(this);
+    throw new UnsupportedOperationException("TODO");
   }
 
   /**
@@ -93,15 +90,14 @@ public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   }
 
   /**
-   * Visits a LeafNode to determine the matching node based on a given path.
+   * Visits a ValueNode to determine the matching node based on a given path.
    *
    * @param valueNode The NullNode being visited.
    * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
    */
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
-    depth++;
-    return valueNode;
+    throw new UnsupportedOperationException("TODO");
   }
 
   /**

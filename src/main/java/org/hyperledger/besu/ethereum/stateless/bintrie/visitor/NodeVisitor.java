@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullLeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
+import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
 
 /**
  * Defines a visitor interface for nodes in the State Trie.
@@ -52,16 +53,6 @@ public interface NodeVisitor<K extends BitSequence<K>, V> {
   }
 
   /**
-   * Visits a leaf node.
-   *
-   * @param leafNode The leaf node to visit.
-   * @return The result of visiting the leaf node.
-   */
-  default Node<K, V> visit(LeafNode<K, V> leafNode) {
-    return leafNode;
-  }
-
-  /**
    * Visits a null node.
    *
    * @param nullNode The null node to visit.
@@ -72,12 +63,22 @@ public interface NodeVisitor<K extends BitSequence<K>, V> {
   }
 
   /**
+   * Visits a value node.
+   *
+   * @param valueNode The leaf node to visit.
+   * @return The result of visiting the leaf node.
+   */
+  default LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
+    return valueNode;
+  }
+
+  /**
    * Visits a null leaf node.
    *
    * @param nullLeafNode The null node to visit.
    * @return The result of visiting the null node.
    */
-  default Node<K, V> visit(NullLeafNode<K, V> nullLeafNode) {
+  default LeafNode<K, V> visit(NullLeafNode<K, V> nullLeafNode) {
     return nullLeafNode;
   }
 }

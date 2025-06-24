@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.stateless.bintrie.node;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.NodeVisitor;
-import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.PathNodeVisitor;
 
 import java.util.Optional;
 
@@ -30,21 +29,9 @@ import org.apache.tuweni.bytes.Bytes;
  * structure. It implements the Node interface and represents a node that contains no information or
  * value.
  */
-public class NullLeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
+public class NullLeafNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
   private NullLeafNode() {
     super(Optional.empty());
-  }
-
-  /**
-   * Accepts a visitor for path-based operations on the node.
-   *
-   * @param visitor The path node visitor.
-   * @param path The path associated with a node.
-   * @return The result of the visitor's operation.
-   */
-  @Override
-  public Node<K, V> accept(PathNodeVisitor<K, V> visitor, BitSequence<K> path) {
-    return visitor.visit(this, path);
   }
 
   /**
@@ -54,7 +41,7 @@ public class NullLeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @return The result of the visitor's operation.
    */
   @Override
-  public Node<K, V> accept(NodeVisitor<K, V> visitor) {
+  public LeafNode<K, V> accept(NodeVisitor<K, V> visitor) {
     return visitor.visit(this);
   }
 
@@ -65,7 +52,7 @@ public class NullLeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @return The updated Node
    */
   @Override
-  public Node<K, V> replaceLocation(BitSequence<K> newLocation) {
+  public LeafNode<K, V> replaceLocation(BitSequence<K> newLocation) {
     return this;
   }
 

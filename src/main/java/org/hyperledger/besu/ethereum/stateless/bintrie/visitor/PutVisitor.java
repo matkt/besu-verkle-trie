@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullLeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
+import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
 
 import java.util.Optional;
 
@@ -111,18 +112,6 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   }
 
   /**
-   * Visits a leaf node to insert or update a value associated with the provided path.
-   *
-   * @param leafNode The leaf node to visit.
-   * @return The updated leaf node with the inserted or updated value.
-   */
-  @Override
-  public Node<K, V> visit(final LeafNode<K, V> leafNode) {
-    depth++;
-    return new LeafNode<K, V>(leafNode.location, Optional.of(value), leafNode.valueSerializer);
-  }
-
-  /**
    * Visits a null node to insert or update a value associated with the provided path.
    *
    * @param nullNode The null node to visit.
@@ -136,14 +125,26 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   }
 
   /**
+   * Visits a value node to insert or update a value associated with the provided path.
+   *
+   * @param valueNode The value node to visit.
+   * @return The updated value node with the inserted or updated value.
+   */
+  @Override
+  public LeafNode<K, V> visit(final ValueNode<K, V> valueNode) {
+    depth++;
+    return new ValueNode<K, V>(valueNode.location, Optional.of(value), valueNode.valueSerializer);
+  }
+
+  /**
    * Visits a null leafnode to insert or update a value associated with the provided path.
    *
    * @param nullLeafNode The null node to visit.
    * @return A new leaf node containing the inserted or updated value.
    */
   @Override
-  public Node<K, V> visit(final NullLeafNode<K, V> nullLeafNode) {
+  public LeafNode<K, V> visit(final NullLeafNode<K, V> nullLeafNode) {
     depth++;
-    return new LeafNode<K, V>(Optional.of(path.slice(0, depth)), Optional.of(value));
+    return new ValueNode<K, V>(Optional.of(path.slice(0, depth)), Optional.of(value));
   }
 }

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.stateless.bintrie.node;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.NodeVisitor;
-import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.PathNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +34,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public final BitSequence<K> stem;
   public final Optional<Bytes32> valuesCommitment;
-  private final List<Node<K, V>> children;
+  private final List<LeafNode<K, V>> children;
 
   /**
    * Constructs a new BranchNode with location, hash, path, and children.
@@ -51,7 +50,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
       final BitSequence<K> stem,
       final Optional<Bytes32> commitment,
       final Optional<Bytes32> valuesCommitment,
-      final List<Node<K, V>> children) {
+      final List<LeafNode<K, V>> children) {
     super(location);
     this.stem = stem;
     this.valuesCommitment = Optional.empty();
@@ -68,7 +67,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public StemNode(
       final Optional<BitSequence<K>> location,
       final BitSequence<K> stem,
-      final List<Node<K, V>> children) {
+      final List<LeafNode<K, V>> children) {
     super(location);
     this.stem = stem;
     this.valuesCommitment = Optional.empty();
@@ -86,9 +85,9 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
     this.stem = stem;
     this.valuesCommitment = Optional.empty();
 
-    List<Node<K, V>> nullChildren = new ArrayList<>(maxChild());
+    List<LeafNode<K, V>> nullChildren = new ArrayList<>(maxChild());
     for (int i = 0; i < maxChild(); i++) {
-      nullChildren.add(NullNode.nullNode());
+      nullChildren.add(NullLeafNode.node());
     }
     this.children = nullChildren;
   }
@@ -100,18 +99,6 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   public static int maxChild() {
     return 256;
-  }
-
-  /**
-   * Accepts a visitor for path-based operations on the node.
-   *
-   * @param visitor The path node visitor.
-   * @param path The path associated with a node.
-   * @return The result of the visitor's operation.
-   */
-  @Override
-  public Node<K, V> accept(PathNodeVisitor<K, V> visitor, BitSequence<K> path) {
-    return visitor.visit(this, path);
   }
 
   /**
@@ -131,7 +118,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param suffix Position of the child Node
    * @return Child Node
    */
-  public Node<K, V> child(final int suffix) {
+  public LeafNode<K, V> child(final int suffix) {
     return children.get(suffix);
   }
 
@@ -142,8 +129,8 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param newChild New node.
    * @return the updated StemNode
    */
-  public StemNode<K, V> replaceChild(int suffix, Node<K, V> newChild) {
-    List<Node<K, V>> newChildren = new ArrayList<>(maxChild());
+  public StemNode<K, V> replaceChild(int suffix, LeafNode<K, V> newChild) {
+    List<LeafNode<K, V>> newChildren = new ArrayList<>(maxChild());
     for (int i = 0; i < maxChild(); i++) {
       newChildren.set(i, child(i));
     }
@@ -159,7 +146,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   @Override
   public Node<K, V> replaceLocation(BitSequence<K> newLocation) {
-    List<Node<K, V>> newChildren = new ArrayList<>(maxChild());
+    List<LeafNode<K, V>> newChildren = new ArrayList<>(maxChild());
     for (int i = 0; i < maxChild(); i++) {
       BitSequence<K> childLocation = newLocation.add(i);
       newChildren.set(i, child(i).replaceLocation(childLocation));
