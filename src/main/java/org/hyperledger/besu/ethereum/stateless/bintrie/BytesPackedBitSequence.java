@@ -18,7 +18,8 @@ package org.hyperledger.besu.ethereum.stateless.bintrie;
 import java.util.Arrays;
 
 /**
- * Class representing a sequence of bits, used as prefixes in a Binary Trie. Implementation using
+ * Class representing a sequence of bits, used as prefixes in a Binary Trie.
+ * Implementation using
  * packed bits into byte array.
  */
 public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> {
@@ -131,8 +132,7 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
   @Override
   public BytesPackedBitSequence add(boolean bit) {
     BytesPackedBitSequence newSeq = new BytesPackedBitSequence(bitLength + 1);
-    int byteCount = newSeq.getByteLength();
-    System.arraycopy(this.data, 0, newSeq.data, 0, byteCount);
+    System.arraycopy(this.data, 0, newSeq.data, 0, getByteLength());
     newSeq.set(bitLength, bit);
     return newSeq;
   }
@@ -152,7 +152,7 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
    * Set a bit at a given index to a given value
    *
    * @param bitIndex The bit position to set.
-   * @param value The boolean value to set.
+   * @param value    The boolean value to set.
    */
   @Override
   public void set(int bitIndex, boolean value) {
@@ -196,7 +196,8 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
   }
 
   /**
-   * Get a slice of the BytesPackedBitSequence, starting at start in bits until the end.
+   * Get a slice of the BytesPackedBitSequence, starting at start in bits until
+   * the end.
    *
    * @param from The starting position.
    * @return A new BytesPackedBitSequence from the slice.
@@ -209,7 +210,7 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
   /**
    * Get a slice of the BytesPackedBitSequence.
    *
-   * @param from The starting position.
+   * @param from        The starting position.
    * @param toExclusive The ending position.
    * @return A new BytesPackedBitSequence from the slice.
    */
@@ -262,13 +263,13 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
     if (offset == 0) {
       System.arraycopy(other.data, 0, result.data, thisNBytes, otherNBytes);
     } else {
-      result.data[thisNBytes - 1] =
-          (byte) (result.data[thisNBytes - 1] & (other.data[0] >> (N_BITS_PER_BYTE - offset)));
+      result.data[thisNBytes
+          - 1] = (byte) (result.data[thisNBytes - 1] & (other.data[0] >> (N_BITS_PER_BYTE - offset)));
       for (int i = 1; i < otherNBytes; i++) {
-        result.data[thisNBytes + i - 1] =
-            (byte) ((other.data[i - 1] << offset) & (other.data[i] >> (N_BITS_PER_BYTE - offset)));
+        result.data[thisNBytes + i
+            - 1] = (byte) ((other.data[i - 1] << offset) & (other.data[i] >> (N_BITS_PER_BYTE - offset)));
       }
-      if (totalBits % N_BITS_PER_BYTE != 0) { // Left over bits
+      if (totalBits > N_BITS_PER_BYTE * (thisNBytes + otherNBytes - 1)) { // Left over bits
         result.data[thisNBytes + otherNBytes - 1] = (byte) (other.data[otherNBytes - 1] << offset);
       }
     }
@@ -333,7 +334,8 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
     // Last byte may be incomplete
     encodedInt = Byte.toUnsignedInt(data[nBytes - 1]);
     int nBits = (bitLength % N_BITS_PER_BYTE);
-    if (nBits == 0) nBits = N_BITS_PER_BYTE;
+    if (nBits == 0)
+      nBits = N_BITS_PER_BYTE;
     out[nBytes - 1] = (byte) (encodedInt + nBits - Integer.bitCount(encodedInt));
     return out;
   }
@@ -350,11 +352,14 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null || getClass() != obj.getClass()) return false;
+    if (this == obj)
+      return true;
+    if (obj == null || getClass() != obj.getClass())
+      return false;
 
     BytesPackedBitSequence other = (BytesPackedBitSequence) obj;
-    if (this.bitLength != other.bitLength) return false;
+    if (this.bitLength != other.bitLength)
+      return false;
 
     int nBytes = getByteLength();
     return Arrays.equals(this.data, 0, nBytes, other.data, 0, nBytes);

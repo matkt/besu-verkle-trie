@@ -32,6 +32,14 @@ public interface BitSequenceFactory<K extends BitSequence<K>> {
   public K fromBinaryString(String bits);
 
   /**
+   * Get a BitSequence from a binary string representation.
+   *
+   * @param bits Binary string representation.
+   * @return A string representation of the node.
+   */
+  public K fromHexString(String bits);
+
+  /**
    * Get a BitSequence from an Integer.
    *
    * @param value Integer value.

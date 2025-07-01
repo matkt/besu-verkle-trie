@@ -132,7 +132,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public StemNode<K, V> replaceChild(int suffix, LeafNode<K, V> newChild) {
     List<LeafNode<K, V>> newChildren = new ArrayList<>(maxChild());
     for (int i = 0; i < maxChild(); i++) {
-      newChildren.set(i, child(i));
+      newChildren.add(child(i));
     }
     newChildren.set(suffix, newChild);
     return new StemNode<K, V>(location, stem, commitment, valuesCommitment, newChildren);
@@ -149,7 +149,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
     List<LeafNode<K, V>> newChildren = new ArrayList<>(maxChild());
     for (int i = 0; i < maxChild(); i++) {
       BitSequence<K> childLocation = newLocation.add(i);
-      newChildren.set(i, child(i).replaceLocation(childLocation));
+      newChildren.add(child(i).replaceLocation(childLocation));
     }
     return (Node<K, V>)
         new StemNode<K, V>(

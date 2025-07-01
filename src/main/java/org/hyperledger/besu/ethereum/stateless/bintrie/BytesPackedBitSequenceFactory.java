@@ -30,7 +30,7 @@ public class BytesPackedBitSequenceFactory implements BitSequenceFactory<BytesPa
    * Get a BytesPackedBitSequence from a binary string representation.
    *
    * @param bits Binary string representation.
-   * @return A string representation of the node.
+   * @return BitSequence
    */
   @Override
   public BytesPackedBitSequence fromBinaryString(String bits) {
@@ -42,6 +42,30 @@ public class BytesPackedBitSequenceFactory implements BitSequenceFactory<BytesPa
     BytesPackedBitSequence result = new BytesPackedBitSequence(bits.length());
     for (int i = 0; i < bits.length(); i++) {
       result.set(i, bits.charAt(i) == '1');
+    }
+    return result;
+  }
+
+  /**
+   * Get a BytesPackedBitSequence from a hex string representation.
+   *
+   * @param hexString Hex string representation.
+   * @return The BitSequence
+   */
+  @Override
+  public BytesPackedBitSequence fromHexString(String hexString) {
+    if (hexString == null || !hexString.matches("0x[0-9A-Fa-f]*")) {
+      throw new IllegalArgumentException(
+          "Input must be a binary string (only '0' and '1' allowed)");
+    }
+
+    BytesPackedBitSequence result = new BytesPackedBitSequence(hexString.length() * 4 - 8);
+    for (int i = 0; i < hexString.length() - 2; i++) {
+      int k = Integer.parseInt(hexString.substring(i + 2, i + 3), 16);
+      for (int j = 0; j < 4; j++) {
+        result.set(4 * i + 3 - j, k % 2 == 1);
+        k = k >> 1;
+      }
     }
     return result;
   }
