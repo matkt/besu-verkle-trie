@@ -25,8 +25,7 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
 
 /**
- * Class representing a visitor for traversing nodes in a Trie tree to find a
- * node based on a path.
+ * Class representing a visitor for traversing nodes in a Trie tree to find a node based on a path.
  *
  * @param <K> The type of node's location.
  * @param <V> The type of node values.
@@ -85,8 +84,7 @@ public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    * Visits a NullNode to determine the matching node based on a given path.
    *
    * @param nullNode The NullNode being visited.
-   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the
-   *         path.
+   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
    */
   @Override
   public Node<K, V> visit(NullNode<K, V> nullNode) {
@@ -98,8 +96,7 @@ public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    * Visits a LeafNode to determine the matching node based on a given path.
    *
    * @param valueNode The NullNode being visited.
-   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the
-   *         path.
+   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
    */
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
@@ -111,8 +108,7 @@ public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    * Visits a NullLeafNode to determine the matching node based on a given path.
    *
    * @param nullLeafNode The NullNode being visited.
-   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the
-   *         path.
+   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
    */
   @Override
   public LeafNode<K, V> visit(NullLeafNode<K, V> nullLeafNode) {

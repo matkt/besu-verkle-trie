@@ -15,9 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.stateless.bintrie;
 
-/**
- * Interface representing a sequence of bits, used as prefixes in a Binary Trie.
- */
+/** Interface representing a sequence of bits, used as prefixes in a Binary Trie. */
 public abstract class BitSequence<T extends BitSequence<T>> implements Comparable<BitSequence<T>> {
   /**
    * Get a BitSequence factory
@@ -82,7 +80,7 @@ public abstract class BitSequence<T extends BitSequence<T>> implements Comparabl
    * Set a bit at a given index to a given value
    *
    * @param bitIndex The bit position to set.
-   * @param value    The boolean value to set.
+   * @param value The boolean value to set.
    */
   public abstract void set(int bitIndex, boolean value);
 
@@ -97,7 +95,7 @@ public abstract class BitSequence<T extends BitSequence<T>> implements Comparabl
   /**
    * Get a slice of the BitSequence.
    *
-   * @param from        The starting position.
+   * @param from The starting position.
    * @param toExclusive The ending position.
    * @return A new BitSequence from the slice.
    */
