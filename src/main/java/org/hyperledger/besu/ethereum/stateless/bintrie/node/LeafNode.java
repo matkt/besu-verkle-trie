@@ -63,6 +63,7 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
    *
    * @param location The location of the node in the trie.
    * @param value The node's value.
+   * @param commitment The node's commitment
    */
   public LeafNode(
       final Optional<BitSequence<K>> location,
@@ -82,5 +83,17 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public abstract LeafNode<K, V> accept(NodeVisitor<K, V> visitor);
 
   @Override
+  public abstract LeafNode<K, V> setLocation(Optional<BitSequence<K>> newLocation);
+
+  @Override
   public abstract LeafNode<K, V> replaceLocation(BitSequence<K> newLocation);
+
+  /**
+   * Set node's commitment
+   *
+   * @param newCommitment The new commitment for the Node
+   * @return The updated Node
+   */
+  @Override
+  public abstract LeafNode<K, V> setCommitment(Optional<Bytes32> newCommitment);
 }

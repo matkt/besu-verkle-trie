@@ -47,6 +47,9 @@ public interface BinTrie<K extends BitSequence<K>, V> {
    */
   void remove(K key);
 
+  /** Restructure tree to get minimal representation. */
+  void flatten();
+
   /**
    * Returns the hash of the root node of the trie.
    *

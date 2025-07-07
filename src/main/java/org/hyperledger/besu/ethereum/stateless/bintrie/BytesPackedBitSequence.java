@@ -113,6 +113,21 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
   }
 
   /**
+   * The binary string representation of the BitSequence.
+   *
+   * @return A byte array representation of the node.
+   */
+  @Override
+  public byte[] toBytes() {
+    int size = (bitLength + 7) / 8;
+    byte[] result = new byte[size];
+    for (int i = 0; i < size; i++) {
+      result[i] = (byte) slice(8 * i, 8 * i + 8).toInt();
+    }
+    return result;
+  }
+
+  /**
    * Get length in bits
    *
    * @return Sequence's length in bits.

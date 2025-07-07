@@ -37,6 +37,7 @@ public abstract class Node<K extends BitSequence<K>, V> {
   // Number of bits in stem and key
   public static int STEM_SIZE = 248;
   public static int KEY_SIZE = 256;
+  public static int COMMITMENT_SIZE = 256;
 
   // Data fields
   public final Optional<BitSequence<K>> location;
@@ -82,12 +83,36 @@ public abstract class Node<K extends BitSequence<K>, V> {
   public abstract Node<K, V> accept(NodeVisitor<K, V> visitor);
 
   /**
-   * Replace node's Location
+   * Set node's location
+   *
+   * @param newLocation The new location for the Node
+   * @return The updated Node
+   */
+  public abstract Node<K, V> setLocation(Optional<BitSequence<K>> newLocation);
+
+  /**
+   * Set node's commitment
+   *
+   * @param newCommitment The new commitment for the Node
+   * @return The updated Node
+   */
+  public abstract Node<K, V> setCommitment(Optional<Bytes32> newCommitment);
+
+  /**
+   * Replace node's Location recursively.
    *
    * @param newLocation The new location for the Node
    * @return The updated Node
    */
   public abstract Node<K, V> replaceLocation(BitSequence<K> newLocation);
+
+  /**
+   * Set node's commitment value.
+   *
+   * @param commitment
+   * @return Node with modified commitment
+   */
+  // public abstract Node<K, V> setCommitment(Bytes32 commitment);
 
   /**
    * Get the encoded value of the node.

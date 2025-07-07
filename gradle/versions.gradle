@@ -25,6 +25,8 @@ dependencyManagement {
 
         dependency 'io.github.crate-crypto:java-verkle-cryptography:0.0.3'
 
+	dependency 'org.bouncycastle:bcprov-jdk18on:1.81'
+
         dependencySet(group: 'org.hyperledger.besu.internal', version: '24.7.0') {
             entry 'rlp'
             entry 'trie'

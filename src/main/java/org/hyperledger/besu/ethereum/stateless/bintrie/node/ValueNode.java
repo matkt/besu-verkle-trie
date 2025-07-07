@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Represents a leaf node in the Verkle Trie.
@@ -39,7 +40,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   public ValueNode(final Optional<BitSequence<K>> location) {
     super(location, Optional.empty());
-    this.valueSerializer = val -> (Bytes) val;
+    valueSerializer = val -> (Bytes) val;
   }
 
   /**
@@ -69,6 +70,23 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
   }
 
   /**
+   * Constructs a new ValueNode with location, value.
+   *
+   * @param location The location of the node in the tree.
+   * @param commitment The node's commitment
+   * @param value The value associated with the node.
+   * @param valueSerializer Serializer for values.
+   */
+  public ValueNode(
+      final Optional<BitSequence<K>> location,
+      final Optional<Bytes32> commitment,
+      final Optional<V> value,
+      final Function<V, Bytes> valueSerializer) {
+    super(location, value, commitment);
+    this.valueSerializer = valueSerializer;
+  }
+
+  /**
    * Accepts a visitor for generic node operations.
    *
    * @param visitor The node visitor.
@@ -79,9 +97,37 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
     return visitor.visit(this);
   }
 
+  /**
+   * Set node's Location
+   *
+   * @param newLocation The new location for the Node
+   * @return The updated Node
+   */
   @Override
-  public LeafNode<K, V> replaceLocation(BitSequence<K> newLocation) {
+  public ValueNode<K, V> setLocation(Optional<BitSequence<K>> newLocation) {
+    return this;
+  }
+
+  /**
+   * Replaces recursively node's Location
+   *
+   * @param newLocation The new location for the Node
+   * @return The updated Node
+   */
+  @Override
+  public ValueNode<K, V> replaceLocation(BitSequence<K> newLocation) {
     return new ValueNode<K, V>(Optional.of(newLocation), value, valueSerializer);
+  }
+
+  /**
+   * Set node's Commitment
+   *
+   * @param newCommitment The new commitment for the Node
+   * @return The updated Node
+   */
+  @Override
+  public ValueNode<K, V> setCommitment(Optional<Bytes32> newCommitment) {
+    return new ValueNode<K, V>(location, commitment, value, valueSerializer);
   }
 
   /**

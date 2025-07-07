@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.NodeVisitor;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * A special node representing a null or empty node in the Verkle Trie.
@@ -46,13 +47,35 @@ public class NullNode<K extends BitSequence<K>, V> extends Node<K, V> {
   }
 
   /**
+   * Set node's Location
+   *
+   * @param newLocation The new location for the Node
+   * @return The updated Node
+   */
+  @Override
+  public NullNode<K, V> setLocation(Optional<BitSequence<K>> newLocation) {
+    return this;
+  }
+
+  /**
    * Replace node's Location
    *
    * @param newLocation The new location for the Node
    * @return The updated Node
    */
   @Override
-  public Node<K, V> replaceLocation(BitSequence<K> newLocation) {
+  public NullNode<K, V> replaceLocation(BitSequence<K> newLocation) {
+    return this;
+  }
+
+  /**
+   * Set node's commitment
+   *
+   * @param newCommitment The new commitment for the Node
+   * @return The updated Node
+   */
+  @Override
+  public NullNode<K, V> setCommitment(Optional<Bytes32> newCommitment) {
     return this;
   }
 

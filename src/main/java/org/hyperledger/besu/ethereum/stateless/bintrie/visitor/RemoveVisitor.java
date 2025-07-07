@@ -58,7 +58,17 @@ public class RemoveVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
    */
   @Override
   public Node<K, V> visit(InternalNode<K, V> internalNode) {
-    throw new UnsupportedOperationException("TODO");
+    depth++;
+    final boolean branch = path.get(depth);
+    final Node<K, V> childToVisit = internalNode.child(branch);
+    final Node<K, V> visitedChild = childToVisit.accept(this);
+    final InternalNode<K, V> updatedNode = internalNode.replaceChild(branch, visitedChild);
+    final boolean wasChildNullified =
+        (!(childToVisit instanceof NullNode) && (visitedChild instanceof NullNode));
+    if (visitedChild.isDirty() || wasChildNullified) {
+      updatedNode.markDirty();
+    }
+    return updatedNode;
   }
 
   /**
@@ -69,7 +79,21 @@ public class RemoveVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
    */
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
-    throw new UnsupportedOperationException("TODO");
+    depth++;
+    final K prefix = path.commonPrefix(stemNode.stem);
+    if (prefix.length() < stemNode.stem.length()) {
+      return NullNode.nullNode();
+    }
+    int suffix = path.slice(Node.STEM_SIZE).toInt();
+    final LeafNode<K, V> childToVisit = stemNode.child(suffix);
+    final LeafNode<K, V> visitedChild = childToVisit.accept(this);
+    final StemNode<K, V> updatedNode = stemNode.replaceChild(suffix, visitedChild);
+    final boolean wasChildNullified =
+        (!(childToVisit instanceof NullLeafNode) && (visitedChild instanceof NullLeafNode));
+    if (visitedChild.isDirty() || wasChildNullified) {
+      updatedNode.markDirty();
+    }
+    return updatedNode;
   }
 
   /**
@@ -87,12 +111,12 @@ public class RemoveVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
   /**
    * Visits a ValueNode to determine the matching node based on a given path.
    *
-   * @param valueNode The NullNode being visited.
+   * @param valueNode The ValueNode being visited.
    * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
    */
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
-    throw new UnsupportedOperationException("TODO");
+    return NullLeafNode.node();
   }
 
   /**

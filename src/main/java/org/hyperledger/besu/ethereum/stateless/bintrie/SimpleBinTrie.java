@@ -17,10 +17,11 @@ package org.hyperledger.besu.ethereum.stateless.bintrie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.ethereum.stateless.bintrie.node.InternalNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.LeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
+import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.CommitVisitor;
+import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.FlattenVisitor;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.GetVisitor;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.HashVisitor;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.PutVisitor;
@@ -44,7 +45,8 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
   /** Creates a new Bin Trie with a null node as the root. */
   public SimpleBinTrie(BitSequenceFactory<K> factory) {
     this.factory = factory;
-    this.root = new InternalNode<K, V>(Optional.of(factory.empty()));
+    this.root = NullNode.nullNode();
+    // this.root = new InternalNode<K, V>(Optional.of(factory.empty()));
   }
 
   /**
@@ -54,7 +56,8 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    */
   public SimpleBinTrie(final Optional<Node<K, V>> root, BitSequenceFactory<K> factory) {
     this.factory = factory;
-    this.root = root.orElse(new InternalNode<K, V>(Optional.of(factory.empty())));
+    this.root = root.orElse(NullNode.nullNode());
+    // this.root = root.orElse(new InternalNode<K, V>(Optional.of(factory.empty())));
   }
 
   /**
@@ -117,6 +120,12 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
     this.root = root.accept(new RemoveVisitor<K, V>(key));
   }
 
+  /** Restructure tree to get minimal representation. */
+  @Override
+  public void flatten() {
+    this.root = root.accept(new FlattenVisitor<K, V>());
+  }
+
   /**
    * Computes and returns the root hash of the Bin Trie.
    *
@@ -124,8 +133,9 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    */
   @Override
   public Bytes32 getRootHash() {
-    root = root.accept(new HashVisitor<K, V>(root.location.get()));
-    return root.commitment.get();
+    BitSequence<K> loc = root.location.orElse(factory.empty());
+    root = root.accept(new HashVisitor<K, V>(loc));
+    return root.commitment.orElse(Node.EMPTY_COMMITMENT);
   }
 
   /**

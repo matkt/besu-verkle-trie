@@ -24,6 +24,14 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.crypto.digests.Blake3Digest;
+
 /**
  * Class representing a visitor for traversing nodes in a Trie tree to find a node based on a path.
  *
@@ -58,7 +66,24 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
    */
   @Override
   public Node<K, V> visit(InternalNode<K, V> internalNode) {
-    throw new UnsupportedOperationException("TODO");
+    if (!internalNode.isDirty() && internalNode.commitment.isPresent()) {
+      return internalNode;
+    }
+    Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
+
+    Node<K, V> left = internalNode.left.accept(this);
+    byte[] leftCommitment = left.commitment.orElse(Node.EMPTY_COMMITMENT).toArray();
+    digest.update(leftCommitment, 0, leftCommitment.length);
+
+    Node<K, V> right = internalNode.left.accept(this);
+    byte[] rightCommitment = right.commitment.orElse(Node.EMPTY_COMMITMENT).toArray();
+    digest.update(rightCommitment, 0, rightCommitment.length);
+
+    byte[] hash = new byte[digest.getDigestSize()];
+    digest.doFinal(hash, 0);
+    Optional<Bytes32> commitment = Optional.of(Bytes32.wrap(hash));
+
+    return new InternalNode<K, V>(internalNode.location, commitment, left, right);
   }
 
   /**
@@ -69,7 +94,50 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
    */
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
-    throw new UnsupportedOperationException("TODO");
+    if (!stemNode.isDirty() && stemNode.commitment.isPresent()) {
+      return stemNode;
+    }
+    Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
+    List<Bytes> commitments = new ArrayList<>(StemNode.maxChild());
+    byte[] hash = new byte[digest.getDigestSize()];
+
+    // Visit leaves
+    for (LeafNode<K, V> leafNode : stemNode.children) {
+      LeafNode<K, V> newNode = leafNode.accept(this);
+      commitments.add(newNode.commitment.orElse(Node.EMPTY_COMMITMENT));
+    }
+
+    // Compute valuesCommitment by explicitely rolling up commiments.
+    while (commitments.size() > 1) {
+      if (commitments.size() % 2 == 1) {
+        commitments.add(Node.EMPTY_COMMITMENT);
+      }
+      List<Bytes> rolledUp = new ArrayList<>(commitments.size() / 2);
+      for (int i = 0; i < commitments.size(); i += 2) {
+        Bytes left = commitments.get(i);
+        Bytes right = commitments.get(i + 1);
+        if (left == Node.EMPTY_COMMITMENT && right == Node.EMPTY_COMMITMENT) {
+          rolledUp.add(Node.EMPTY_COMMITMENT);
+        } else {
+          digest.update(left.toArray(), 0, left.size());
+          digest.update(right.toArray(), 0, right.size());
+          digest.doFinal(hash, 0);
+          rolledUp.add(Bytes.wrap(hash));
+          digest.reset();
+        }
+      }
+      commitments = rolledUp;
+    }
+
+    // H(stem + 0x00 + valuesCommitment)
+    byte[] stemBytes = stemNode.stem.toBytes();
+    byte[] valuesCommitment = commitments.get(0).toArray();
+    digest.update(stemBytes, 0, stemBytes.length);
+    digest.update((byte) 0);
+    digest.update(valuesCommitment, 0, valuesCommitment.length);
+    digest.doFinal(hash, 0);
+    Optional<Bytes32> commitment = Optional.of(Bytes32.wrap(hash));
+    return stemNode.setCommitment(commitment);
   }
 
   /**
@@ -92,7 +160,10 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
    */
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
-    throw new UnsupportedOperationException("TODO");
+    depth++;
+    Optional<Bytes32> commitment =
+        valueNode.value.map(val -> (Bytes32) valueNode.valueSerializer.apply(val));
+    return valueNode.setCommitment(commitment);
   }
 
   /**

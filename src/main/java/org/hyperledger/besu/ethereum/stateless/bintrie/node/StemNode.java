@@ -33,8 +33,7 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public final BitSequence<K> stem;
-  public final Optional<Bytes32> valuesCommitment;
-  private final List<LeafNode<K, V>> children;
+  public final List<LeafNode<K, V>> children;
 
   /**
    * Constructs a new BranchNode with location, hash, path, and children.
@@ -42,18 +41,15 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param location The location in the tree.
    * @param stem Node's stem.
    * @param commitment The node's commitment
-   * @param valuesCommitment The node's commitment to values
    * @param children The list of children nodes.
    */
   public StemNode(
       final Optional<BitSequence<K>> location,
       final BitSequence<K> stem,
       final Optional<Bytes32> commitment,
-      final Optional<Bytes32> valuesCommitment,
       final List<LeafNode<K, V>> children) {
     super(location);
     this.stem = stem;
-    this.valuesCommitment = Optional.empty();
     this.children = children;
   }
 
@@ -70,7 +66,6 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
       final List<LeafNode<K, V>> children) {
     super(location);
     this.stem = stem;
-    this.valuesCommitment = Optional.empty();
     this.children = children;
   }
 
@@ -83,7 +78,6 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public StemNode(final Optional<BitSequence<K>> location, final BitSequence<K> stem) {
     super(location);
     this.stem = stem;
-    this.valuesCommitment = Optional.empty();
 
     List<LeafNode<K, V>> nullChildren = new ArrayList<>(maxChild());
     for (int i = 0; i < maxChild(); i++) {
@@ -135,7 +129,18 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
       newChildren.add(child(i));
     }
     newChildren.set(suffix, newChild);
-    return new StemNode<K, V>(location, stem, commitment, valuesCommitment, newChildren);
+    return new StemNode<K, V>(location, stem, commitment, newChildren);
+  }
+
+  /**
+   * Set node's Location
+   *
+   * @param newLocation The new location for the Node
+   * @return The updated Node
+   */
+  @Override
+  public StemNode<K, V> setLocation(Optional<BitSequence<K>> newLocation) {
+    return new StemNode<K, V>(newLocation, stem, commitment, children);
   }
 
   /**
@@ -151,9 +156,51 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
       BitSequence<K> childLocation = newLocation.add(i);
       newChildren.add(child(i).replaceLocation(childLocation));
     }
-    return (Node<K, V>)
-        new StemNode<K, V>(
-            Optional.of(newLocation), stem, commitment, valuesCommitment, newChildren);
+    return (Node<K, V>) new StemNode<K, V>(Optional.of(newLocation), stem, commitment, newChildren);
+  }
+
+  /**
+   * Set node's commitment
+   *
+   * @param newCommitment The new commitment for the Node
+   * @return The updated Node
+   */
+  @Override
+  public Node<K, V> setCommitment(Optional<Bytes32> newCommitment) {
+    return new StemNode<K, V>(location, stem, newCommitment, children);
+  }
+
+  /**
+   * Find index of only non-null child if it exists.
+   *
+   * @return The optional index.
+   */
+  Optional<Integer> findOnlyChild() {
+    Optional<Integer> onlyChildIndex = Optional.empty();
+    for (int i = 0; i < children.size(); ++i) {
+      if (!(children.get(i) instanceof NullLeafNode)) {
+        if (onlyChildIndex.isPresent()) {
+          return Optional.empty();
+        }
+        onlyChildIndex = Optional.of(i);
+      }
+    }
+    return onlyChildIndex;
+  }
+
+  /**
+   * Are all leaves null?
+   *
+   * @return Are all leaves null?
+   */
+  public boolean allLeavesAreNull() {
+    // TODO: treat eventual StoredNodes as well.
+    for (LeafNode<K, V> child : children) {
+      if (!(child instanceof NullLeafNode)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -164,9 +211,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
   @Override
   public Bytes encode() {
     return Bytes.concatenate(
-        Bytes.of(stem.encode()),
-        commitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY),
-        valuesCommitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY));
+        Bytes.of(stem.encode()), commitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY));
   }
 
   /**
@@ -217,8 +262,6 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
             .append(stem.toBinaryString())
             .append("\nCommitment: ")
             .append(commitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY))
-            .append("\nValueCommitment: ")
-            .append(valuesCommitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY))
             .append("\"]\n");
 
     for (Node<K, V> child : children) {

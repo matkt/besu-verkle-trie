@@ -95,6 +95,57 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
   }
 
   /**
+   * Get the child Node at given position
+   *
+   * @param branch Position of the child Node
+   * @return Child Node
+   */
+  public Node<K, V> child(final boolean branch) {
+    return branch ? right : left;
+  }
+
+  /**
+   * Replace child Node at given position
+   *
+   * @param branch Position of child node
+   * @param newChild New node.
+   * @return the updated StemNode
+   */
+  public InternalNode<K, V> replaceChild(boolean branch, Node<K, V> newChild) {
+    if (branch) {
+      return new InternalNode<K, V>(location, commitment, left, newChild);
+    } else {
+      return new InternalNode<K, V>(location, commitment, newChild, right);
+    }
+  }
+
+  /**
+   * Get branch of only non-null node if it exists.
+   *
+   * @return if there is only on non-null child, its branch
+   */
+  public Optional<Boolean> findOnlyChild() {
+    if (left instanceof NullNode) {
+      return Optional.of(true);
+    }
+    if (right instanceof NullNode) {
+      return Optional.of(false);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Replace node's Location
+   *
+   * @param newLocation The new location for the Node
+   * @return The updated Node
+   */
+  @Override
+  public InternalNode<K, V> setLocation(Optional<BitSequence<K>> newLocation) {
+    return new InternalNode<K, V>(newLocation, commitment, left, right);
+  }
+
+  /**
    * Replace node's Location
    *
    * @param newLocation The new location for the Node
@@ -105,6 +156,17 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
     Node<K, V> newLeft = left.replaceLocation(newLocation.add(false));
     Node<K, V> newRight = right.replaceLocation(newLocation.add(true));
     return new InternalNode<K, V>(Optional.of(newLocation), commitment, newLeft, newRight);
+  }
+
+  /**
+   * Set node's commitment
+   *
+   * @param newCommitment The new commitment for the Node
+   * @return The updated Node
+   */
+  @Override
+  public InternalNode<K, V> setCommitment(Optional<Bytes32> newCommitment) {
+    return new InternalNode<K, V>(location, newCommitment, left, right);
   }
 
   /**
