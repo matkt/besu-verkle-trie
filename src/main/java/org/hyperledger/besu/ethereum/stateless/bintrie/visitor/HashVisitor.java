@@ -92,9 +92,9 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
     Optional<Bytes32> newCommitment = Optional.of(hash(left.commitment, right.commitment));
 
     // System.out.println(
-        // String.format(
-            // "Internal commitment: %s -> %s",
-            // internalNode.location.get().toBinaryString(), newCommitment));
+    // String.format(
+    // "Internal commitment: %s -> %s",
+    // internalNode.location.get().toBinaryString(), newCommitment));
     return new InternalNode<K, V>(internalNode.location, newCommitment, left, right);
   }
 
@@ -129,14 +129,14 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
       for (int i = 0; i < commitments.size(); i += 2) {
         Bytes32 left = commitments.get(i);
         Bytes32 right = commitments.get(i + 1);
-	Bytes32 rolledCommitment = hash(left, right);
-	rolledUp.add(rolledCommitment);
+        Bytes32 rolledCommitment = hash(left, right);
+        rolledUp.add(rolledCommitment);
         // if (rolledCommitment != Node.EMPTY_COMMITMENT) {
-          // System.out.println(
-              // String.format(
-                  // "Stem commitment rolling up size %s, index %s:\n H(%s, %s)\n -> %s",
-                  // commitments.size(), i, left, right, rolledCommitment)); 
-	// }
+        // System.out.println(
+        // String.format(
+        // "Stem commitment rolling up size %s, index %s:\n H(%s, %s)\n -> %s",
+        // commitments.size(), i, left, right, rolledCommitment));
+        // }
       }
       commitments = rolledUp;
     }
@@ -146,8 +146,8 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
     Bytes32 stemBytes = Bytes32.rightPad(Bytes.of(stemNode.stem.toBytes()));
     Optional<Bytes32> newCommitment = Optional.of(hash(stemBytes, commitments.get(0)));
     // System.out.println(
-        // String.format(
-            // "Stem commitment: %s -> %s", Bytes.wrap(stemNode.stem.toBytes()), newCommitment));
+    // String.format(
+    // "Stem commitment: %s -> %s", Bytes.wrap(stemNode.stem.toBytes()), newCommitment));
     return new StemNode<K, V>(stemNode.location, stemNode.stem, newCommitment, children);
   }
 
@@ -174,8 +174,8 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
     Optional<Bytes32> newCommitment = Optional.of(hash(valueSerialized));
     // BitSequence<K> loc = valueNode.location.get();
     // System.out.println(
-        // String.format(
-            // "Value commitment at %s:\n %s -> %s", loc.toBinaryString(), valueSerialized, newCommitment));
+    // String.format(
+    // "Value commitment at %s:\n %s -> %s", loc.toBinaryString(), valueSerialized, newCommitment));
     return valueNode.setCommitment(newCommitment);
   }
 

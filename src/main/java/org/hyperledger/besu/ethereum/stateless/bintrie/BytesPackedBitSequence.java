@@ -281,10 +281,13 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
           (byte) (result.data[thisNBytes - 1] | ((other.data[0] & 0xFF) >> offset));
       for (int i = 1; i < otherNBytes; i++) {
         result.data[thisNBytes + i - 1] =
-            (byte) ( ((other.data[i - 1] & 0xFF) << (N_BITS_PER_BYTE - offset)) | ((other.data[i] & 0xFF) >> offset));
+            (byte)
+                (((other.data[i - 1] & 0xFF) << (N_BITS_PER_BYTE - offset))
+                    | ((other.data[i] & 0xFF) >> offset));
       }
       if (totalBits > N_BITS_PER_BYTE * (thisNBytes + otherNBytes - 1)) { // Left over bits
-        result.data[thisNBytes + otherNBytes - 1] = (byte) ((other.data[otherNBytes - 1] & 0xFF) << (N_BITS_PER_BYTE - offset));
+        result.data[thisNBytes + otherNBytes - 1] =
+            (byte) ((other.data[otherNBytes - 1] & 0xFF) << (N_BITS_PER_BYTE - offset));
       }
     }
     return result;

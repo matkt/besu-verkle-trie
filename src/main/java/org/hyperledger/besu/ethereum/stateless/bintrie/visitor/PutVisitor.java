@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
 
 import java.util.Optional;
-import org.apache.tuweni.bytes.Bytes;
 
 /**
  * A visitor for inserting or updating values in a Verkle Trie.
@@ -49,7 +48,8 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
     assert path.length() <= Node.KEY_SIZE;
     this.path = path;
     this.value = value;
-    // System.out.println(String.format("PutVisit path=%s, value=%s", Bytes.wrap(path.toBytes()), value));
+    // System.out.println(String.format("PutVisit path=%s, value=%s", Bytes.wrap(path.toBytes()),
+    // value));
   }
 
   /**
@@ -61,7 +61,8 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   @Override
   public Node<K, V> visit(final InternalNode<K, V> internalNode) {
     depth++;
-    // System.out.println(String.format("PutVisit Internal depth=%s, branch=%s", depth, path.get(depth)));
+    // System.out.println(String.format("PutVisit Internal depth=%s, branch=%s", depth,
+    // path.get(depth)));
     Node<K, V> result;
     if (path.get(depth)) {
       result =
@@ -94,11 +95,13 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
     if (stemNode.stem.compareTo(newStem) == 0) { // Same stem => skip to leaf in StemNode
       depth++;
       final int suffix = path.slice(Node.STEM_SIZE).toInt();
-      // System.out.println(String.format("PutVisit Same Stem: depth=%s, stem=%s, suffix=%s", depth, Bytes.wrap(stemNode.stem.toBytes()), suffix));
+      // System.out.println(String.format("PutVisit Same Stem: depth=%s, stem=%s, suffix=%s", depth,
+      // Bytes.wrap(stemNode.stem.toBytes()), suffix));
       Node<K, V> result = stemNode.replaceChild(suffix, stemNode.child(suffix).accept(this));
       return result;
     } else { // Divergent stems => push StemNode one level down
-      // System.out.println(String.format("PutVisit Other Stem: depth=%s, stem=%s, branch=%s", depth, Bytes.wrap(stemNode.stem.toBytes()), stemNode.stem.get(depth + 1)));
+      // System.out.println(String.format("PutVisit Other Stem: depth=%s, stem=%s, branch=%s",
+      // depth, Bytes.wrap(stemNode.stem.toBytes()), stemNode.stem.get(depth + 1)));
       InternalNode<K, V> result;
       if (stemNode.stem.get(depth + 1)) {
         result =
@@ -126,7 +129,8 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    */
   @Override
   public Node<K, V> visit(final NullNode<K, V> nullNode) {
-    // System.out.println(String.format("Put visit Null: loc=%s, stem=%s", path.slice(0, depth+1).toBinaryString(), Bytes.wrap(path.slice(0, Node.STEM_SIZE).toBytes())));
+    // System.out.println(String.format("Put visit Null: loc=%s, stem=%s", path.slice(0,
+    // depth+1).toBinaryString(), Bytes.wrap(path.slice(0, Node.STEM_SIZE).toBytes())));
     return new StemNode<K, V>(Optional.of(path.slice(0, depth + 1)), path.slice(0, Node.STEM_SIZE))
         .accept(this);
   }
@@ -152,7 +156,8 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   @Override
   public LeafNode<K, V> visit(final NullLeafNode<K, V> nullLeafNode) {
     depth++;
-    // System.out.println(String.format("PutVisit NullLeaf: depth=%s, loc=%s", depth, path.slice(0, depth - 1).concatenate(path.slice(Node.STEM_SIZE)).toBinaryString()));
+    // System.out.println(String.format("PutVisit NullLeaf: depth=%s, loc=%s", depth, path.slice(0,
+    // depth - 1).concatenate(path.slice(Node.STEM_SIZE)).toBinaryString()));
     return new ValueNode<K, V>(
         Optional.of(path.slice(0, depth - 1).concatenate(path.slice(Node.STEM_SIZE))),
         Optional.of(value));

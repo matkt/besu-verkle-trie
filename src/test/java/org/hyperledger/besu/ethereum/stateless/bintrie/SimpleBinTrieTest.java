@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -121,8 +120,8 @@ public class SimpleBinTrieTest {
     Bytes32 hash = trie.getRootHash();
     assertThat(trie.get(key1).get()).as("Get first value").isEqualByComparingTo(value1);
     assertThat(trie.get(key2).get()).as("Get second value").isEqualByComparingTo(value2);
-    Bytes32 expectedRootHash = Bytes32
-      .fromHexString("0x68c411009ff23a134bd625459125bebb0347262e0a880aa8de37bd255edb77ac");
+    Bytes32 expectedRootHash =
+        Bytes32.fromHexString("0x68c411009ff23a134bd625459125bebb0347262e0a880aa8de37bd255edb77ac");
     assertThat(hash).as("Retrieve root hash").isEqualByComparingTo(expectedRootHash);
   }
 
@@ -143,17 +142,24 @@ public class SimpleBinTrieTest {
     trie.put(key2, value2);
     assertThat(trie.get(key1)).as("Retrieve first value").isEqualTo(Optional.of(value1));
     assertThat(trie.get(key2)).as("Retrieve second value").isEqualTo(Optional.of(value2));
-    Bytes32 expectedRootHash = Bytes32.fromHexString("0xb5aa9c1591c7a6422ec7f68d9dc69e91bf3b135eedb929f3164802a62ef1b1c8");
+    Bytes32 expectedRootHash =
+        Bytes32.fromHexString("0xb5aa9c1591c7a6422ec7f68d9dc69e91bf3b135eedb929f3164802a62ef1b1c8");
     assertThat(trie.getRootHash()).as("Retrieve root hash").isEqualByComparingTo(expectedRootHash);
   }
 
   @Test
   public void testDeleteTwoValuesAtSameStem() throws Exception {
     SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
-    BytesPackedBitSequence key1 = keyFactory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value1 = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000001");
-    BytesPackedBitSequence key2 = keyFactory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
-    Bytes32 value2 = Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000002");
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000001");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
+    Bytes32 value2 =
+        Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000002");
     trie.put(key1, value1);
     trie.put(key2, value2);
     trie.remove(key1);
@@ -165,10 +171,16 @@ public class SimpleBinTrieTest {
   @Test
   public void testDeleteTwoValuesAtDifferentIndex() throws Exception {
     SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
-    BytesPackedBitSequence key1 = keyFactory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value1 = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key2 = keyFactory.fromHexString("0xff112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
-    Bytes32 value2 = Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0xff112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
+    Bytes32 value2 =
+        Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
     trie.put(key1, value1);
     trie.put(key2, value2);
     trie.remove(key1);
@@ -180,10 +192,16 @@ public class SimpleBinTrieTest {
   @Test
   public void testDeleteTwoValuesWithDivergentStemsAtDepth2() throws Exception {
     SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
-    BytesPackedBitSequence key1 = keyFactory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value1 = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key2 = keyFactory.fromHexString("0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddee");
-    Bytes32 value2 = Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddee");
+    Bytes32 value2 =
+        Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
     trie.put(key1, value1);
     trie.put(key2, value2);
     trie.remove(key1);
@@ -195,12 +213,21 @@ public class SimpleBinTrieTest {
   @Test
   public void testDeleteThreeValues() throws Exception {
     SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
-    BytesPackedBitSequence key1 = keyFactory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value1 = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key2 = keyFactory.fromHexString("0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddee");
-    Bytes32 value2 = Bytes32.fromHexString("0x0200000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key3 = keyFactory.fromHexString("0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddff");
-    Bytes32 value3 = Bytes32.fromHexString("0x0300000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddee");
+    Bytes32 value2 =
+        Bytes32.fromHexString("0x0200000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key3 =
+        keyFactory.fromHexString(
+            "0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddff");
+    Bytes32 value3 =
+        Bytes32.fromHexString("0x0300000000000000000000000000000000000000000000000000000000000000");
     trie.put(key1, value1);
     trie.put(key2, value2);
     trie.put(key3, value3);
@@ -217,12 +244,21 @@ public class SimpleBinTrieTest {
   @Test
   public void testDeleteThreeValuesWithFlattening() throws Exception {
     SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
-    BytesPackedBitSequence key1 = keyFactory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value1 = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key2 = keyFactory.fromHexString("0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddee");
-    Bytes32 value2 = Bytes32.fromHexString("0x0200000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key3 = keyFactory.fromHexString("0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddff");
-    Bytes32 value3 = Bytes32.fromHexString("0x0300000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddee");
+    Bytes32 value2 =
+        Bytes32.fromHexString("0x0200000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key3 =
+        keyFactory.fromHexString(
+            "0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddff");
+    Bytes32 value3 =
+        Bytes32.fromHexString("0x0300000000000000000000000000000000000000000000000000000000000000");
     trie.put(key1, value1);
     trie.put(key2, value2);
     trie.put(key3, value3);
@@ -237,24 +273,41 @@ public class SimpleBinTrieTest {
   }
 
   @Test
-  public void testDeleteAllValuesWithDivergentStemsAtDepth2() throws Exception
-  {
+  public void testDeleteAllValuesWithDivergentStemsAtDepth2() throws Exception {
     SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
-    BytesPackedBitSequence key0 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45641");
-    Bytes32 value0 = Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
-    BytesPackedBitSequence key1 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45601");
-    Bytes32 value1 = Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
-    BytesPackedBitSequence key2 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45602");
+    BytesPackedBitSequence key0 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45641");
+    Bytes32 value0 =
+        Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45601");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45602");
     Bytes32 value2 = Bytes32.fromHexString("0x01");
-    BytesPackedBitSequence key3 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45600");
+    BytesPackedBitSequence key3 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45600");
     Bytes32 value3 = Bytes32.fromHexString("0x00");
-    BytesPackedBitSequence key4 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45603");
-    Bytes32 value4 = Bytes32.fromHexString("0xf84a97f1f0a956e738abd85c2e0a5026f8874e3ec09c8f012159dfeeaab2b156");
-    BytesPackedBitSequence key5 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45604");
+    BytesPackedBitSequence key4 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45603");
+    Bytes32 value4 =
+        Bytes32.fromHexString("0xf84a97f1f0a956e738abd85c2e0a5026f8874e3ec09c8f012159dfeeaab2b156");
+    BytesPackedBitSequence key5 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45604");
     Bytes32 value5 = Bytes32.fromHexString("0x03");
-    BytesPackedBitSequence key6 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45680");
-    Bytes32 value6 = Bytes32.fromHexString("0x0000010200000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key6 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45680");
+    Bytes32 value6 =
+        Bytes32.fromHexString("0x0000010200000000000000000000000000000000000000000000000000000000");
     trie.put(key0, value0);
     trie.put(key1, value1);
     trie.put(key2, value2);
@@ -274,24 +327,41 @@ public class SimpleBinTrieTest {
   }
 
   @Test
-  public void testDeleteManyValuesWithDivergentStemsAtDepth2() throws Exception
-  {
+  public void testDeleteManyValuesWithDivergentStemsAtDepth2() throws Exception {
     SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
-    BytesPackedBitSequence key0 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45641");
-    Bytes32 value0 = Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
-    BytesPackedBitSequence key1 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45601");
-    Bytes32 value1 = Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
-    BytesPackedBitSequence key2 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45602");
+    BytesPackedBitSequence key0 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45641");
+    Bytes32 value0 =
+        Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45601");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45602");
     Bytes32 value2 = Bytes32.fromHexString("0x01");
-    BytesPackedBitSequence key3 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45600");
+    BytesPackedBitSequence key3 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45600");
     Bytes32 value3 = Bytes32.fromHexString("0x00");
-    BytesPackedBitSequence key4 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45603");
-    Bytes32 value4 = Bytes32.fromHexString("0xf84a97f1f0a956e738abd85c2e0a5026f8874e3ec09c8f012159dfeeaab2b156");
-    BytesPackedBitSequence key5 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45604");
+    BytesPackedBitSequence key4 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45603");
+    Bytes32 value4 =
+        Bytes32.fromHexString("0xf84a97f1f0a956e738abd85c2e0a5026f8874e3ec09c8f012159dfeeaab2b156");
+    BytesPackedBitSequence key5 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45604");
     Bytes32 value5 = Bytes32.fromHexString("0x03");
-    BytesPackedBitSequence key6 = keyFactory.fromHexString("0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45680");
-    Bytes32 value6 = Bytes32.fromHexString("0x0000010200000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key6 =
+        keyFactory.fromHexString(
+            "0x1e4abaeaa58259f4784e086ddbaa74a9d3975efb2e4380595f0eed5692c45680");
+    Bytes32 value6 =
+        Bytes32.fromHexString("0x0000010200000000000000000000000000000000000000000000000000000000");
     trie.put(key0, value0);
     trie.put(key1, value1);
     trie.put(key2, value2);

@@ -155,7 +155,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
     for (int i = 0; i < maxChild(); i++) {
       LeafNode<K, V> childNode = child(i);
       if (childNode instanceof NullLeafNode) {
-	newChildren.add(childNode);
+        newChildren.add(childNode);
       } else {
         BitSequence<K> childLocation = newLocation.add(i);
         newChildren.add(child(i).replaceLocation(childLocation));

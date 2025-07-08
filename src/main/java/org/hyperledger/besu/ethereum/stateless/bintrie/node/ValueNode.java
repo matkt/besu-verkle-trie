@@ -150,8 +150,10 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   @Override
   public String print() {
-    return "Value [" + location.map(loc -> loc.toBinaryString()).orElse(".") + "]: "
-	    + value.map(Object::toString).orElse("empty");
+    return "Value ["
+        + location.map(loc -> loc.toBinaryString()).orElse(".")
+        + "]: "
+        + value.map(Object::toString).orElse("empty");
   }
 
   /**
