@@ -48,7 +48,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
       final BitSequence<K> stem,
       final Optional<Bytes32> commitment,
       final List<LeafNode<K, V>> children) {
-    super(location);
+    super(location, commitment);
     this.stem = stem;
     this.children = children;
   }
@@ -153,8 +153,13 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public Node<K, V> replaceLocation(BitSequence<K> newLocation) {
     List<LeafNode<K, V>> newChildren = new ArrayList<>(maxChild());
     for (int i = 0; i < maxChild(); i++) {
-      BitSequence<K> childLocation = newLocation.add(i);
-      newChildren.add(child(i).replaceLocation(childLocation));
+      LeafNode<K, V> childNode = child(i);
+      if (childNode instanceof NullLeafNode) {
+	newChildren.add(childNode);
+      } else {
+        BitSequence<K> childLocation = newLocation.add(i);
+        newChildren.add(child(i).replaceLocation(childLocation));
+      }
     }
     return (Node<K, V>) new StemNode<K, V>(Optional.of(newLocation), stem, commitment, newChildren);
   }
@@ -221,17 +226,17 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   @Override
   public String print() {
-    String loc = location.map(lc -> lc.toBinaryString()).orElse("[]");
+    String loc = location.map(lc -> lc.toBinaryString()).orElse(".");
     final StringBuilder builder = new StringBuilder();
     builder.append(
         String.format(
-            "Stem %s: stem %s commitment %s",
+            "Stem[%s]: stem[%s] %s",
             loc,
-            stem.toBinaryString(),
+            Bytes.wrap(stem.toBytes()),
             commitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY).toHexString()));
     for (int i = 0; i < maxChild(); i++) {
       final Node<K, V> child = child(i);
-      if (!(child instanceof NullNode)) {
+      if (!(child instanceof NullLeafNode)) {
         builder.append("\n").append(child.print());
       }
     }

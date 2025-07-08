@@ -121,9 +121,10 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
   public byte[] toBytes() {
     int size = (bitLength + 7) / 8;
     byte[] result = new byte[size];
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size - 1; i++) {
       result[i] = (byte) slice(8 * i, 8 * i + 8).toInt();
     }
+    result[size - 1] = (byte) slice(8 * size - 8, bitLength).toInt();
     return result;
   }
 
@@ -277,13 +278,13 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
       System.arraycopy(other.data, 0, result.data, thisNBytes, otherNBytes);
     } else {
       result.data[thisNBytes - 1] =
-          (byte) (result.data[thisNBytes - 1] & (other.data[0] >> (N_BITS_PER_BYTE - offset)));
+          (byte) (result.data[thisNBytes - 1] | ((other.data[0] & 0xFF) >> offset));
       for (int i = 1; i < otherNBytes; i++) {
         result.data[thisNBytes + i - 1] =
-            (byte) ((other.data[i - 1] << offset) & (other.data[i] >> (N_BITS_PER_BYTE - offset)));
+            (byte) ( ((other.data[i - 1] & 0xFF) << (N_BITS_PER_BYTE - offset)) | ((other.data[i] & 0xFF) >> offset));
       }
       if (totalBits > N_BITS_PER_BYTE * (thisNBytes + otherNBytes - 1)) { // Left over bits
-        result.data[thisNBytes + otherNBytes - 1] = (byte) (other.data[otherNBytes - 1] << offset);
+        result.data[thisNBytes + otherNBytes - 1] = (byte) ((other.data[otherNBytes - 1] & 0xFF) << (N_BITS_PER_BYTE - offset));
       }
     }
     return result;

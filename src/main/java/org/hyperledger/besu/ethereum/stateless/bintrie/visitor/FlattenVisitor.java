@@ -60,27 +60,6 @@ public class FlattenVisitor<K extends BitSequence<K>, V> implements NodeVisitor<
     return new InternalNode<K, V>(internalNode.location, left, right);
   }
 
-  // Optional<Boolean> onlyChildBranch = internalNode.findOnlyChild();
-  // if (onlyChildBranch.isEmpty()) {
-  // return internalNode;
-  // }
-  // final boolean branch = onlyChildBranch.get();
-  // Node<K, V> child = internalNode.child(branch).accept(this);
-  //
-  // // N+I -> do not flatten, N+S -> flatten
-  // if (child instanceof InternalNode) {
-  // return internalNode.replaceChild(branch, child);
-  // } else if (child instanceof StemNode) {
-  // Optional<BitSequence<K>> loc = child.location.map(x -> x.slice(0, x.length()
-  // - 1));
-  // return child.setLocation(loc);
-  // } else if (child instanceof NullNode) {
-  // return
-  // } else {
-  // throw new NotImplementedException("Unknown node type");
-  // }
-  // }
-
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
     if (stemNode.allLeavesAreNull()) {

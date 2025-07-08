@@ -115,7 +115,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @return The updated Node
    */
   @Override
-  public ValueNode<K, V> replaceLocation(BitSequence<K> newLocation) {
+  public ValueNode<K, V> replaceLocation(final BitSequence<K> newLocation) {
     return new ValueNode<K, V>(Optional.of(newLocation), value, valueSerializer);
   }
 
@@ -126,8 +126,11 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @return The updated Node
    */
   @Override
-  public ValueNode<K, V> setCommitment(Optional<Bytes32> newCommitment) {
-    return new ValueNode<K, V>(location, commitment, value, valueSerializer);
+  public ValueNode<K, V> setCommitment(final Optional<Bytes32> newCommitment) {
+    if (newCommitment.equals(commitment)) {
+      return this;
+    }
+    return new ValueNode<K, V>(location, newCommitment, value, valueSerializer);
   }
 
   /**
@@ -147,7 +150,8 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   @Override
   public String print() {
-    return "Leaf:" + value.map(Object::toString).orElse("empty");
+    return "Value [" + location.map(loc -> loc.toBinaryString()).orElse(".") + "]: "
+	    + value.map(Object::toString).orElse("empty");
   }
 
   /**

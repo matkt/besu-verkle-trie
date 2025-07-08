@@ -76,7 +76,10 @@ public class NullLeafNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   @Override
   public NullLeafNode<K, V> setCommitment(Optional<Bytes32> newCommitment) {
-    return this;
+    if (newCommitment.orElse(Node.EMPTY_COMMITMENT) == Node.EMPTY_COMMITMENT) {
+      return this;
+    }
+    throw new RuntimeException("Cannot set non-empty commitment to NullLeafNode");
   }
 
   @Override

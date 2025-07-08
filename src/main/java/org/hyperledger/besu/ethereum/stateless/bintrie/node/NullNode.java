@@ -76,7 +76,10 @@ public class NullNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   @Override
   public NullNode<K, V> setCommitment(Optional<Bytes32> newCommitment) {
-    return this;
+    if (newCommitment.orElse(Node.EMPTY_COMMITMENT) == Node.EMPTY_COMMITMENT) {
+      return this;
+    }
+    throw new RuntimeException("Cannot set non-empty commitment to NullNode");
   }
 
   @Override

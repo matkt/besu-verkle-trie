@@ -33,77 +33,90 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.digests.Blake3Digest;
 
 /**
- * Class representing a visitor for traversing nodes in a Trie tree to find a node based on a path.
+ * Class for gathering Trie's commitments.
  *
  * @param <K> The type of node's location.
  * @param <V> The type of node values.
  */
 public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
-  public final BitSequence<K> path;
-  private int depth;
+  private final Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
 
-  public HashVisitor(final BitSequence<K> path) {
-    if (path == null) {
-      throw new IllegalArgumentException("HashVisitor's path cannot be null");
-    }
-    if (path.length() > Node.KEY_SIZE) {
-      throw new IllegalArgumentException(
-          String.format("HashVisitor's path's size cannot be more than %s", Node.KEY_SIZE));
-    }
-    this.path = path;
-    this.depth = -1;
+  public HashVisitor() {
+    digest.reset();
   }
 
-  public int getDepth() {
-    return depth;
+  private Bytes32 hash(Bytes32 value) {
+    byte[] hash = new byte[digest.getDigestSize()];
+    digest.reset();
+    digest.update(value.toArray(), 0, value.size());
+    digest.doFinal(hash, 0);
+    Bytes32 result = (Bytes32) Bytes.of(hash);
+    digest.reset();
+    return result;
+  }
+
+  private Bytes32 hash(Optional<Bytes32> left, Optional<Bytes32> right) {
+    Bytes32 leftValue = left.orElse(Node.EMPTY_COMMITMENT);
+    Bytes32 rightValue = right.orElse(Node.EMPTY_COMMITMENT);
+    return hash(leftValue, rightValue);
+  }
+
+  private Bytes32 hash(Bytes32 leftValue, Bytes32 rightValue) {
+    if (leftValue == Node.EMPTY_COMMITMENT && rightValue == Node.EMPTY_COMMITMENT) {
+      return Node.EMPTY_COMMITMENT;
+    }
+    byte[] rawDigest = new byte[digest.getDigestSize()];
+    digest.reset();
+    digest.update(leftValue.toArray(), 0, leftValue.size());
+    digest.update(rightValue.toArray(), 0, rightValue.size());
+    digest.doFinal(rawDigest, 0);
+    Bytes32 result = (Bytes32) Bytes.of(rawDigest);
+    digest.reset();
+    return result;
   }
 
   /**
-   * Visits a internalNode to determine the node matching a given path.
+   * Computes commitment for an internal node.
    *
    * @param internalNode The internalNode being visited.
-   * @return The matching node or NULL_NODE_RESULT if not found.
+   * @return The internalNode with computed commitment.
    */
   @Override
   public Node<K, V> visit(InternalNode<K, V> internalNode) {
     if (!internalNode.isDirty() && internalNode.commitment.isPresent()) {
       return internalNode;
     }
-    Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
 
     Node<K, V> left = internalNode.left.accept(this);
-    byte[] leftCommitment = left.commitment.orElse(Node.EMPTY_COMMITMENT).toArray();
-    digest.update(leftCommitment, 0, leftCommitment.length);
+    Node<K, V> right = internalNode.right.accept(this);
+    Optional<Bytes32> newCommitment = Optional.of(hash(left.commitment, right.commitment));
 
-    Node<K, V> right = internalNode.left.accept(this);
-    byte[] rightCommitment = right.commitment.orElse(Node.EMPTY_COMMITMENT).toArray();
-    digest.update(rightCommitment, 0, rightCommitment.length);
-
-    byte[] hash = new byte[digest.getDigestSize()];
-    digest.doFinal(hash, 0);
-    Optional<Bytes32> commitment = Optional.of(Bytes32.wrap(hash));
-
-    return new InternalNode<K, V>(internalNode.location, commitment, left, right);
+    // System.out.println(
+        // String.format(
+            // "Internal commitment: %s -> %s",
+            // internalNode.location.get().toBinaryString(), newCommitment));
+    return new InternalNode<K, V>(internalNode.location, newCommitment, left, right);
   }
 
   /**
-   * Visits a stemNode to determine the node matching a given path.
+   * Computes commitment for a stem node.
    *
    * @param stemNode The stemNode being visited.
-   * @return The matching node or NULL_NODE_RESULT if not found.
+   * @return The stemNode with computed commitment.
    */
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
     if (!stemNode.isDirty() && stemNode.commitment.isPresent()) {
       return stemNode;
     }
-    Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
-    List<Bytes> commitments = new ArrayList<>(StemNode.maxChild());
-    byte[] hash = new byte[digest.getDigestSize()];
+
+    List<LeafNode<K, V>> children = new ArrayList<>(StemNode.maxChild());
+    List<Bytes32> commitments = new ArrayList<>(StemNode.maxChild());
 
     // Visit leaves
     for (LeafNode<K, V> leafNode : stemNode.children) {
       LeafNode<K, V> newNode = leafNode.accept(this);
+      children.add(newNode);
       commitments.add(newNode.commitment.orElse(Node.EMPTY_COMMITMENT));
     }
 
@@ -112,69 +125,68 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
       if (commitments.size() % 2 == 1) {
         commitments.add(Node.EMPTY_COMMITMENT);
       }
-      List<Bytes> rolledUp = new ArrayList<>(commitments.size() / 2);
+      List<Bytes32> rolledUp = new ArrayList<>(commitments.size() / 2);
       for (int i = 0; i < commitments.size(); i += 2) {
-        Bytes left = commitments.get(i);
-        Bytes right = commitments.get(i + 1);
-        if (left == Node.EMPTY_COMMITMENT && right == Node.EMPTY_COMMITMENT) {
-          rolledUp.add(Node.EMPTY_COMMITMENT);
-        } else {
-          digest.update(left.toArray(), 0, left.size());
-          digest.update(right.toArray(), 0, right.size());
-          digest.doFinal(hash, 0);
-          rolledUp.add(Bytes.wrap(hash));
-          digest.reset();
-        }
+        Bytes32 left = commitments.get(i);
+        Bytes32 right = commitments.get(i + 1);
+	Bytes32 rolledCommitment = hash(left, right);
+	rolledUp.add(rolledCommitment);
+        // if (rolledCommitment != Node.EMPTY_COMMITMENT) {
+          // System.out.println(
+              // String.format(
+                  // "Stem commitment rolling up size %s, index %s:\n H(%s, %s)\n -> %s",
+                  // commitments.size(), i, left, right, rolledCommitment)); 
+	// }
       }
       commitments = rolledUp;
     }
 
+    // System.out.println(String.format("Stem values commitment: %s", commitments.get(0)));
     // H(stem + 0x00 + valuesCommitment)
-    byte[] stemBytes = stemNode.stem.toBytes();
-    byte[] valuesCommitment = commitments.get(0).toArray();
-    digest.update(stemBytes, 0, stemBytes.length);
-    digest.update((byte) 0);
-    digest.update(valuesCommitment, 0, valuesCommitment.length);
-    digest.doFinal(hash, 0);
-    Optional<Bytes32> commitment = Optional.of(Bytes32.wrap(hash));
-    return stemNode.setCommitment(commitment);
+    Bytes32 stemBytes = Bytes32.rightPad(Bytes.of(stemNode.stem.toBytes()));
+    Optional<Bytes32> newCommitment = Optional.of(hash(stemBytes, commitments.get(0)));
+    // System.out.println(
+        // String.format(
+            // "Stem commitment: %s -> %s", Bytes.wrap(stemNode.stem.toBytes()), newCommitment));
+    return new StemNode<K, V>(stemNode.location, stemNode.stem, newCommitment, children);
   }
 
   /**
-   * Visits a NullNode to determine the matching node based on a given path.
+   * Computes commitment for a null node.
    *
-   * @param nullNode The NullNode being visited.
-   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
+   * @param nullNode The nullNode being visited.
+   * @return The nullNode, the commitment being already set.
    */
   @Override
   public Node<K, V> visit(NullNode<K, V> nullNode) {
-    depth++;
     return nullNode;
   }
 
   /**
-   * Visits a ValueNode to determine the matching node based on a given path.
+   * Computes commitment for a value node.
    *
-   * @param valueNode The NullNode being visited.
-   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
+   * @param valueNode The valueNode being visited.
+   * @return The valueNode with computed commitment.
    */
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
-    depth++;
-    Optional<Bytes32> commitment =
-        valueNode.value.map(val -> (Bytes32) valueNode.valueSerializer.apply(val));
-    return valueNode.setCommitment(commitment);
+    Bytes32 valueSerialized = (Bytes32) valueNode.valueSerializer.apply(valueNode.value.get());
+    Optional<Bytes32> newCommitment = Optional.of(hash(valueSerialized));
+    // BitSequence<K> loc = valueNode.location.get();
+    // System.out.println(
+        // String.format(
+            // "Value commitment at %s:\n %s -> %s", loc.toBinaryString(), valueSerialized, newCommitment));
+    return valueNode.setCommitment(newCommitment);
   }
 
   /**
-   * Visits a NullLeafNode to determine the matching node based on a given path.
+   * Computes commitment for a null leaf node.
    *
-   * @param nullLeafNode The NullNode being visited.
-   * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
+   * @param nullLeafNode The nullLeafNode being visited.
+   * @return The nullLeafNode, the commitment being already set.
    */
   @Override
   public LeafNode<K, V> visit(NullLeafNode<K, V> nullLeafNode) {
-    depth++;
     return nullLeafNode;
   }
 }

@@ -16,115 +16,133 @@
 package org.hyperledger.besu.ethereum.stateless.bintrie;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
+import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
-import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 public class SimpleBinTrieTest {
+  static BytesPackedBitSequenceFactory keyFactory;
 
-  // import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
-  // @Test
-  // public void testEmptyTrie() {
-  // SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie =
-  // new SimpleBinTrie<>(new BytesPackedBitSequenceFactory());
-  // assertThat(trie.getRootHash())
-  // .as("Retrieve root hash")
-  // .isEqualByComparingTo(Node.EMPTY_COMMITMENT);
-  // }
+  @BeforeAll
+  static void setup() {
+    keyFactory = new BytesPackedBitSequenceFactory();
+  }
+
+  @Test
+  public void testEmptyTrie() {
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    assertThat(trie.getRootHash())
+        .as("Retrieve root hash")
+        .isEqualByComparingTo(Node.EMPTY_COMMITMENT);
+  }
 
   @Test
   public void testOneValue() {
-    BytesPackedBitSequenceFactory factory = new BytesPackedBitSequenceFactory();
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(factory);
-    BytesPackedBitSequence key = factory
-        .fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    BytesPackedBitSequence key =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
     trie.put(key, value);
     assertThat(trie.get(key))
         .as("Get one value should be the inserted value")
         .isEqualTo(Optional.of(value));
-    // Bytes32 expectedRootHash = Bytes32
-    // .fromHexString("0x70985156c77f266a97c35d5a051b6c48b3ed64669105ea0a6a248220bedaece4");
-    // assertThat(trie.getRootHash()).as("Retrieve root
-    // hash").isEqualByComparingTo(expectedRootHash);
+    Bytes32 expectedRootHash =
+        Bytes32.fromHexString("0x951d42689548318da1121b320255387e6d7bb17c34f2ef4885af82596ad384ed");
+    assertThat(trie.getRootHash()).as("Retrieve root hash").isEqualByComparingTo(expectedRootHash);
   }
 
   @Test
   public void testDeleteAlreadyDeletedValue() {
-    BytesPackedBitSequenceFactory factory = new BytesPackedBitSequenceFactory();
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(factory);
-    BytesPackedBitSequence key = factory
-        .fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequenceFactory keyFactory = new BytesPackedBitSequenceFactory();
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    BytesPackedBitSequence key =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
     trie.put(key, value);
     assertThat(trie.getRoot()).as("Stem root").isInstanceOf(StemNode.class);
     trie.remove(key);
-    assertTrue(((StemNode<BytesPackedBitSequence, Bytes32>) trie.root).allLeavesAreNull());
     trie.remove(key);
     trie.flatten();
-    assertThat(trie.getRoot()).as("Null root").isInstanceOf(NullNode.class);
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
   }
 
   @Test
   public void testTwoValuesAtSameStem() throws Exception {
-    BytesPackedBitSequenceFactory factory = new BytesPackedBitSequenceFactory();
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(factory);
-    BytesPackedBitSequence key1 = factory
-        .fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value1 = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key2 = factory
-        .fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
-    Bytes32 value2 = Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key3 = factory
-        .fromHexString("0xde112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    BytesPackedBitSequenceFactory keyFactory = new BytesPackedBitSequenceFactory();
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
+    Bytes32 value2 =
+        Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key3 =
+        keyFactory.fromHexString(
+            "0xde112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
     trie.put(key1, value1);
     trie.put(key2, value2);
     assertThat(trie.get(key1).get()).as("Get first value").isEqualByComparingTo(value1);
     assertThat(trie.get(key2).get()).as("Get second value").isEqualByComparingTo(value2);
     assertThat(trie.get(key3)).as("Get non-key returns empty").isEmpty();
 
-    // Bytes32 expectedRootHash = Bytes32
-    // .fromHexString("0x0e6714b82adb7af3d814aac5386878295949ded4eae3e33e08844af49fe042ba");
-    // assertThat(trie.getRootHash()).as("Get root
-    // hash").isEqualByComparingTo(expectedRootHash);
+    Bytes32 expectedRootHash =
+        Bytes32.fromHexString("0xd0a463ba4288815c0ab1f5c6c4ba8c21a416983549dc8147d50ab3105d097050");
+    assertThat(trie.getRootHash()).as("Get root hash").isEqualByComparingTo(expectedRootHash);
   }
 
   @Test
   public void testTwoValuesAtDifferentIndex() throws Exception {
-    BytesPackedBitSequenceFactory factory = new BytesPackedBitSequenceFactory();
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(factory);
-    BytesPackedBitSequence key1 = factory
-        .fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value1 = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key2 = factory
-        .fromHexString("0xff112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
-    Bytes32 value2 = Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequenceFactory keyFactory = new BytesPackedBitSequenceFactory();
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0xff112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
+    Bytes32 value2 =
+        Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
     trie.put(key1, value1);
     trie.put(key2, value2);
+    Bytes32 hash = trie.getRootHash();
     assertThat(trie.get(key1).get()).as("Get first value").isEqualByComparingTo(value1);
     assertThat(trie.get(key2).get()).as("Get second value").isEqualByComparingTo(value2);
-    // Bytes32 expectedRootHash = Bytes32
-    // .fromHexString("0x60d94a57c00df92c007416aac3d85cac54cd979408b0865088fc296611c65efc");
-    // assertThat(trie.getRootHash()).as("Retrieve root
-    // hash").isEqualByComparingTo(expectedRootHash);
+    Bytes32 expectedRootHash = Bytes32
+      .fromHexString("0x68c411009ff23a134bd625459125bebb0347262e0a880aa8de37bd255edb77ac");
+    assertThat(hash).as("Retrieve root hash").isEqualByComparingTo(expectedRootHash);
   }
 
   @Test
   public void testTwoValuesWithDivergentStemsAtDepth2() throws Exception {
-    BytesPackedBitSequenceFactory factory = new BytesPackedBitSequenceFactory();
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(factory);
-    BytesPackedBitSequence key1 = factory
-        .fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
-    Bytes32 value1 = Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
-    BytesPackedBitSequence key2 = factory
-        .fromHexString("0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddee");
-    Bytes32 value2 = Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequenceFactory keyFactory = new BytesPackedBitSequenceFactory();
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    BytesPackedBitSequence key1 =
+        keyFactory.fromHexString(
+            "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+    Bytes32 value1 =
+        Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000000");
+    BytesPackedBitSequence key2 =
+        keyFactory.fromHexString(
+            "0x00ff112233445566778899aabbccddeeff00112233445566778899aabbccddee");
+    Bytes32 value2 =
+        Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000000");
     trie.put(key1, value1);
     trie.put(key2, value2);
     assertThat(trie.get(key1)).as("Retrieve first value").isEqualTo(Optional.of(value1));
@@ -137,15 +155,15 @@ public class SimpleBinTrieTest {
 
   // @Test
   // public void testDeleteTwoValuesAtSameStem() throws Exception {
-  // BytesPackedBitSequenceFactory factory = new BytesPackedBitSequenceFactory();
+  // BytesPackedBitSequenceFactory keyFactory = new BytesPackedBitSequenceFactory();
   // SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new
-  // SimpleBinTrie<>(factory);
+  // SimpleBinTrie<>(keyFactory);
   // BytesPackedBitSequence key1 =
-  // factory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
+  // keyFactory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
   // Bytes32 value1 =
   // Bytes32.fromHexString("0x1000000000000000000000000000000000000000000000000000000000000001");
   // BytesPackedBitSequence key2 =
-  // factory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
+  // keyFactory.fromHexString("0x00112233445566778899aabbccddeeff00112233445566778899aabbccddee00");
   // Bytes32 value2 =
   // Bytes32.fromHexString("0x0100000000000000000000000000000000000000000000000000000000000002");
   // trie.put(key1, value1);

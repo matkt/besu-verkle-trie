@@ -133,9 +133,9 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    */
   @Override
   public Bytes32 getRootHash() {
-    BitSequence<K> loc = root.location.orElse(factory.empty());
-    root = root.accept(new HashVisitor<K, V>(loc));
-    return root.commitment.orElse(Node.EMPTY_COMMITMENT);
+    root = root.accept(new HashVisitor<K, V>());
+    assert root.commitment.isPresent() : "HashVisitor should produce a rootHash";
+    return root.commitment.get();
   }
 
   /**
@@ -155,7 +155,7 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    */
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
-    root = root.accept(new HashVisitor<K, V>(root.location.get()));
+    root = root.accept(new HashVisitor<K, V>());
     root = root.accept(new CommitVisitor<K, V>(nodeUpdater, root.location.get()));
   }
 

@@ -153,8 +153,8 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   @Override
   public InternalNode<K, V> replaceLocation(BitSequence<K> newLocation) {
-    Node<K, V> newLeft = left.replaceLocation(newLocation.add(false));
-    Node<K, V> newRight = right.replaceLocation(newLocation.add(true));
+    Node<K, V> newLeft = (left instanceof NullNode) ? left : left.replaceLocation(newLocation.add(false));
+    Node<K, V> newRight = (right instanceof NullNode) ? right : right.replaceLocation(newLocation.add(true));
     return new InternalNode<K, V>(Optional.of(newLocation), commitment, newLeft, newRight);
   }
 

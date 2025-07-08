@@ -45,7 +45,7 @@ public abstract class Node<K extends BitSequence<K>, V> {
 
   // Cache fields
   protected Optional<Bytes> encodedValue = Optional.empty(); // Encoded value
-  protected boolean dirty = false;
+  protected boolean dirty = true;
 
   /** Constructs a new Node with empty defaults. */
   public Node() {
@@ -67,11 +67,11 @@ public abstract class Node<K extends BitSequence<K>, V> {
    * Constructs a new Node
    *
    * @param location The location of the node in the trie.
-   * @param commitment The node's commitment value.
+   * @param newCommitment The node's commitment value.
    */
-  public Node(final Optional<BitSequence<K>> location, final Optional<Bytes32> commitment) {
+  public Node(final Optional<BitSequence<K>> location, final Optional<Bytes32> newCommitment) {
     this.location = location;
-    this.commitment = commitment;
+    this.commitment = newCommitment;
   }
 
   /**
