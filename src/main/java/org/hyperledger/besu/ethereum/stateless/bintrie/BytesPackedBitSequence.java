@@ -73,6 +73,32 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
   }
 
   /**
+   * The Hex string representation of the BytesPackedBitSequence.
+   *
+   * @return A string representation of the node.
+   */
+  @Override
+  public String toHexString() {
+    StringBuilder sb = new StringBuilder();
+    int i;
+    for (i = 0; i < bitLength - 3; i += 4) {
+      int value = 0;
+      for (int j = 0; j < 4; j++) {
+	value = (value << 1) | (get(i + j) ? 1 : 0);
+      }
+      sb.append(String.format("%01X", value));
+    }
+    // Remaining 0-3 bits
+    if (i < bitLength - 1) {
+      sb.append(".");  // There is at least 1 remaining bit
+    }
+    for (int j = i; j < bitLength; j++) {
+      sb.append(get(i) ? '1' : '0');
+    }
+    return sb.toString();
+  }
+
+  /**
    * The binary string representation of the BytesPackedBitSequence.
    *
    * @return A string representation of the node.
@@ -153,14 +179,27 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
   }
 
   /**
-   * Add new bits at the end of the Sequence from an Integer.
+   * Add minimal BitSequence representation of suffix to the sequence.
    *
-   * @param suffix The integer value to add at the end of the sequence
-   * @return New BytesPackedBitSequence with added bit at the tail.
+   * @param suffix The integer value to add at the end of the sequence.
+   * @return New BitSequence with added bit at the tail.
    */
   @Override
   public BytesPackedBitSequence add(int suffix) {
     return concatenate(FACTORY.fromInteger(suffix));
+  }
+
+  /**
+   * Add fixed-width BitSequence representation of suffix to the sequence.
+   *
+   * @param suffix The integer value to add at the end of the sequence.
+   * @param width The fixed number of bits in the sequence.
+   * @return New BitSequence with added bit at the tail.
+   */
+  @Override
+  public BytesPackedBitSequence add(int suffix, int width) {
+    // TODO: modify this.
+    return add(suffix);
   }
 
   /**

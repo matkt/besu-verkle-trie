@@ -36,7 +36,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testEmptyTrie() {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     assertThat(trie.getRootHash())
         .as("Retrieve root hash")
         .isEqualByComparingTo(Node.EMPTY_COMMITMENT);
@@ -44,7 +44,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testOneValue() {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -61,7 +61,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testDeleteAlreadyDeletedValue() {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -77,7 +77,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testTwoValuesAtSameStem() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key1 =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -104,7 +104,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testTwoValuesAtDifferentIndex() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key1 =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -127,7 +127,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testTwoValuesWithDivergentStemsAtDepth2() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key1 =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -149,7 +149,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testDeleteTwoValuesAtSameStem() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key1 =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -170,7 +170,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testDeleteTwoValuesAtDifferentIndex() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key1 =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -191,7 +191,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testDeleteTwoValuesWithDivergentStemsAtDepth2() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key1 =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -212,7 +212,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testDeleteThreeValues() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key1 =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -243,7 +243,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testDeleteThreeValuesWithFlattening() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     BytesPackedBitSequence key1 =
         keyFactory.fromHexString(
             "0x00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff");
@@ -274,7 +274,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testDeleteAllValuesWithDivergentStemsAtDepth2() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
     BytesPackedBitSequence key0 =
         keyFactory.fromHexString(
@@ -328,7 +328,7 @@ public class SimpleBinTrieTest {
 
   @Test
   public void testDeleteManyValuesWithDivergentStemsAtDepth2() throws Exception {
-    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>(keyFactory);
+    SimpleBinTrie<BytesPackedBitSequence, Bytes32> trie = new SimpleBinTrie<>();
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
     BytesPackedBitSequence key0 =
         keyFactory.fromHexString(

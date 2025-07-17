@@ -36,8 +36,8 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
   /** Constructs a new empty InternalNode. */
   public InternalNode() {
     super();
-    left = NullNode.nullNode();
-    right = NullNode.nullNode();
+    left = NullNode.node();
+    right = NullNode.node();
   }
 
   /**
@@ -45,10 +45,10 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
    *
    * @param location InternalNode's location
    */
-  public InternalNode(final Optional<BitSequence<K>> location) {
+  public InternalNode(final Optional<K> location) {
     super(location);
-    left = NullNode.nullNode();
-    right = NullNode.nullNode();
+    left = NullNode.node();
+    right = NullNode.node();
   }
 
   /**
@@ -58,8 +58,7 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param left Left Node.
    * @param right Rigth Node.
    */
-  public InternalNode(
-      final Optional<BitSequence<K>> location, final Node<K, V> left, final Node<K, V> right) {
+  public InternalNode(final Optional<K> location, final Node<K, V> left, final Node<K, V> right) {
     super(location);
     this.left = left;
     this.right = right;
@@ -74,7 +73,7 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param right Rigth Node.
    */
   public InternalNode(
-      final Optional<BitSequence<K>> location,
+      final Optional<K> location,
       final Optional<Bytes32> commitment,
       final Node<K, V> left,
       final Node<K, V> right) {
@@ -141,7 +140,7 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @return The updated Node
    */
   @Override
-  public InternalNode<K, V> setLocation(Optional<BitSequence<K>> newLocation) {
+  public InternalNode<K, V> setLocation(Optional<K> newLocation) {
     return new InternalNode<K, V>(newLocation, commitment, left, right);
   }
 
@@ -152,7 +151,7 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @return The updated Node
    */
   @Override
-  public InternalNode<K, V> replaceLocation(BitSequence<K> newLocation) {
+  public InternalNode<K, V> replaceLocation(K newLocation) {
     Node<K, V> newLeft =
         (left instanceof NullNode) ? left : left.replaceLocation(newLocation.add(false));
     Node<K, V> newRight =
@@ -178,7 +177,32 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   @Override
   public Bytes encode() {
-    return commitment.map(x -> x != EMPTY_COMMITMENT ? (Bytes) x : Bytes.EMPTY).get();
+    K loc =
+        location.orElseThrow(
+            () -> new RuntimeException("Cannot encode InternalNode without location"));
+    Bytes encodedCommitment =
+        commitment.orElseThrow(
+            () -> new RuntimeException("Cannot encode InternalNode without commitment"));
+    Bytes leftExtension;
+    Bytes rightExtension;
+    if (left instanceof StemNode) {
+      BitSequence<K> stem = ((StemNode<K, V>) left).stem;
+      leftExtension = Bytes.wrap(stem.slice(loc.length(), stem.length()).encode());
+    } else {
+      leftExtension = Bytes.EMPTY;
+    }
+    if (right instanceof StemNode) {
+      BitSequence<K> stem = ((StemNode<K, V>) right).stem;
+      rightExtension = Bytes.wrap(stem.slice(loc.length(), stem.length()).encode());
+    } else {
+      rightExtension = Bytes.EMPTY;
+    }
+    return Bytes.concatenate(
+        encodedCommitment,
+        Bytes.of(leftExtension.size()),
+        leftExtension,
+        Bytes.of(rightExtension.size()),
+        rightExtension);
   }
 
   /**
@@ -205,29 +229,27 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   @Override
   public String toDot(Boolean showNullNodes) {
-    String loc = location.map(lc -> lc.toBinaryString()).orElse("");
+    String loc = location.map(lc -> lc.toHexString()).orElse("");
+    String leftLoc = left.location.map(lc -> lc.toHexString()).orElse("");
+    String rightLoc = right.location.map(lc -> lc.toHexString()).orElse("");
+
     StringBuilder result =
         new StringBuilder()
+	    .append("\n")
             .append(getName())
             .append(loc)
-            .append(" [label=\"I: ")
-            .append(loc)
-            .append("\nCommitment: ")
+            .append(" [commitment=")
             .append(commitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY))
-            .append("\"]\n");
+            .append("]");
 
-    String edgeString = getName() + loc + " -> " + left.getName() + loc + "\n";
-    if (showNullNodes || !result.toString().contains(edgeString)) {
-      result.append(edgeString);
+    if (!(left instanceof NullNode) || showNullNodes) {
+      result.append("\n" + getName() + loc + " -> " + left.getName() + leftLoc);
+    }
+    if (!(right instanceof NullNode) || showNullNodes) {
+      result.append("\n" + getName() + loc + " -> " + right.getName() + rightLoc);
     }
     result.append(left.toDot(showNullNodes));
-
-    edgeString = getName() + loc + " -> " + right.getName() + loc + "\n";
-    if (showNullNodes || !result.toString().contains(edgeString)) {
-      result.append(edgeString);
-    }
     result.append(right.toDot(showNullNodes));
-
     return result.toString();
   }
 }

@@ -42,7 +42,7 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
    *
    * @param location The location of the node in the trie.
    */
-  public LeafNode(final Optional<BitSequence<K>> location) {
+  public LeafNode(final Optional<K> location) {
     super(location);
     value = Optional.empty();
   }
@@ -53,7 +53,7 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param location The location of the node in the trie.
    * @param value The node's value.
    */
-  public LeafNode(final Optional<BitSequence<K>> location, final Optional<V> value) {
+  public LeafNode(final Optional<K> location, final Optional<V> value) {
     super(location);
     this.value = value;
   }
@@ -66,9 +66,7 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param commitment The node's commitment
    */
   public LeafNode(
-      final Optional<BitSequence<K>> location,
-      final Optional<V> value,
-      final Optional<Bytes32> commitment) {
+      final Optional<K> location, final Optional<V> value, final Optional<Bytes32> commitment) {
     super(location, commitment);
     this.value = value;
   }
@@ -83,10 +81,10 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public abstract LeafNode<K, V> accept(NodeVisitor<K, V> visitor);
 
   @Override
-  public abstract LeafNode<K, V> setLocation(Optional<BitSequence<K>> newLocation);
+  public abstract LeafNode<K, V> setLocation(Optional<K> newLocation);
 
   @Override
-  public abstract LeafNode<K, V> replaceLocation(BitSequence<K> newLocation);
+  public abstract LeafNode<K, V> replaceLocation(K newLocation);
 
   /**
    * Set node's commitment

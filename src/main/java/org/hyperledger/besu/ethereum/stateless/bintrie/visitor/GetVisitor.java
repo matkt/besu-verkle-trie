@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
  * @param <V> The type of node values.
  */
 public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
-  public final BitSequence<K> path;
+  public final K path;
   private int depth;
 
-  public GetVisitor(final BitSequence<K> path) {
+  public GetVisitor(final K path) {
     if (path == null) {
       throw new IllegalArgumentException("GetVisitor's path cannot be null");
     }
@@ -72,9 +72,9 @@ public class GetVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
     depth++;
-    final BitSequence<K> prefix = path.commonPrefix(stemNode.stem);
+    final K prefix = path.commonPrefix(stemNode.stem);
     if (prefix.length() < stemNode.stem.length()) {
-      return NullNode.nullNode();
+      return NullNode.node();
     }
     int suffix = path.slice(Node.STEM_SIZE).toInt();
     return stemNode.child(suffix).accept(this);

@@ -26,10 +26,10 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.GetVisitor;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.HashVisitor;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.PutVisitor;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.RemoveVisitor;
+import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -38,15 +38,12 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <K> The type of keys in the Bin Trie.
  * @param <V> The type of values in the Bin Trie.
  */
-public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements BinTrie<K, V> {
+public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V> {
   protected Node<K, V> root;
-  protected BitSequenceFactory<K> factory;
 
   /** Creates a new Bin Trie with a null node as the root. */
-  public SimpleBinTrie(BitSequenceFactory<K> factory) {
-    this.factory = factory;
-    this.root = NullNode.nullNode();
-    // this.root = new InternalNode<K, V>(Optional.of(factory.empty()));
+  public SimpleBinTrie() {
+    this.root = NullNode.node();
   }
 
   /**
@@ -54,10 +51,8 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    *
    * @param root The root node of the Bin Trie.
    */
-  public SimpleBinTrie(final Optional<Node<K, V>> root, BitSequenceFactory<K> factory) {
-    this.factory = factory;
-    this.root = root.orElse(NullNode.nullNode());
-    // this.root = root.orElse(new InternalNode<K, V>(Optional.of(factory.empty())));
+  public SimpleBinTrie(final Optional<Node<K, V>> root) {
+    this.root = root.orElse(NullNode.node());
   }
 
   /**
@@ -65,9 +60,8 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    *
    * @param root The root node of the Bin Trie.
    */
-  public SimpleBinTrie(final Node<K, V> root, BitSequenceFactory<K> factory) {
+  public SimpleBinTrie(final Node<K, V> root) {
     this.root = root;
-    this.factory = factory;
   }
 
   /**
@@ -133,6 +127,7 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    */
   @Override
   public Bytes32 getRootHash() {
+    root = root.accept(new FlattenVisitor<K, V>());
     root = root.accept(new HashVisitor<K, V>());
     assert root.commitment.isPresent() : "HashVisitor should produce a rootHash";
     return root.commitment.get();
@@ -155,8 +150,8 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    */
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
-    root = root.accept(new HashVisitor<K, V>());
-    root = root.accept(new CommitVisitor<K, V>(nodeUpdater, root.location.get()));
+    getRootHash();
+    root = root.accept(new CommitVisitor<K, V>(nodeUpdater));
   }
 
   /**
@@ -178,9 +173,15 @@ public class SimpleBinTrie<K extends BitSequence<K>, V extends Bytes> implements
    * @return The DOT representation of the Bin Trie.
    */
   public String toDotTree() {
-    StringBuilder result = new StringBuilder("digraph BinTrie {\n");
+    StringBuilder result = new StringBuilder("digraph BinTrie {");
     Node<K, V> root = getRoot();
     result.append(root.toDot());
-    return result.append("}").toString();
+    if (result.indexOf("NullNode") >= 0) {
+      result.append("\nNullNode");
+    }
+    if (result.indexOf("NullLeafNode") >= 0) {
+      result.append("\nNullLeafNode");
+    }
+    return result.append("\n}").toString();
   }
 }

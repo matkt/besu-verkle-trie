@@ -44,7 +44,7 @@ public class FlattenVisitor<K extends BitSequence<K>, V> implements NodeVisitor<
 
     // All null -> null
     if (leftIsNull && rightIsNull) {
-      return NullNode.nullNode();
+      return NullNode.node();
     }
     // Unchanged -> no-op
     if (left == internalNode.left && right == internalNode.right) {
@@ -63,7 +63,7 @@ public class FlattenVisitor<K extends BitSequence<K>, V> implements NodeVisitor<
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
     if (stemNode.allLeavesAreNull()) {
-      return NullNode.nullNode();
+      return NullNode.node();
     }
     return stemNode;
   }

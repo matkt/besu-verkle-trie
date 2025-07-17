@@ -40,7 +40,7 @@ public abstract class Node<K extends BitSequence<K>, V> {
   public static int COMMITMENT_SIZE = 256;
 
   // Data fields
-  public final Optional<BitSequence<K>> location;
+  public final Optional<K> location;
   public final Optional<Bytes32> commitment;
 
   // Cache fields
@@ -58,7 +58,7 @@ public abstract class Node<K extends BitSequence<K>, V> {
    *
    * @param location The location of the node in the trie.
    */
-  public Node(final Optional<BitSequence<K>> location) {
+  public Node(final Optional<K> location) {
     this.location = location;
     commitment = Optional.empty();
   }
@@ -69,7 +69,7 @@ public abstract class Node<K extends BitSequence<K>, V> {
    * @param location The location of the node in the trie.
    * @param newCommitment The node's commitment value.
    */
-  public Node(final Optional<BitSequence<K>> location, final Optional<Bytes32> newCommitment) {
+  public Node(final Optional<K> location, final Optional<Bytes32> newCommitment) {
     this.location = location;
     this.commitment = newCommitment;
   }
@@ -88,7 +88,7 @@ public abstract class Node<K extends BitSequence<K>, V> {
    * @param newLocation The new location for the Node
    * @return The updated Node
    */
-  public abstract Node<K, V> setLocation(Optional<BitSequence<K>> newLocation);
+  public abstract Node<K, V> setLocation(Optional<K> newLocation);
 
   /**
    * Set node's commitment
@@ -104,7 +104,7 @@ public abstract class Node<K extends BitSequence<K>, V> {
    * @param newLocation The new location for the Node
    * @return The updated Node
    */
-  public abstract Node<K, V> replaceLocation(BitSequence<K> newLocation);
+  public abstract Node<K, V> replaceLocation(K newLocation);
 
   /**
    * Set node's commitment value.

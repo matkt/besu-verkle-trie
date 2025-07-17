@@ -32,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <V> The type of the node's value.
  */
 public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
-  public final BitSequence<K> stem;
+  public final K stem;
   public final List<LeafNode<K, V>> children;
 
   /**
@@ -44,8 +44,8 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param children The list of children nodes.
    */
   public StemNode(
-      final Optional<BitSequence<K>> location,
-      final BitSequence<K> stem,
+      final Optional<K> location,
+      final K stem,
       final Optional<Bytes32> commitment,
       final List<LeafNode<K, V>> children) {
     super(location, commitment);
@@ -60,10 +60,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param stem Node's stem.
    * @param children The list of children nodes.
    */
-  public StemNode(
-      final Optional<BitSequence<K>> location,
-      final BitSequence<K> stem,
-      final List<LeafNode<K, V>> children) {
+  public StemNode(final Optional<K> location, final K stem, final List<LeafNode<K, V>> children) {
     super(location);
     this.stem = stem;
     this.children = children;
@@ -75,7 +72,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param location The optional location in the tree.
    * @param stem Node's stem.
    */
-  public StemNode(final Optional<BitSequence<K>> location, final BitSequence<K> stem) {
+  public StemNode(final Optional<K> location, final K stem) {
     super(location);
     this.stem = stem;
 
@@ -93,6 +90,15 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   public static int maxChild() {
     return 256;
+  }
+
+  /**
+   * Get the fixed width in bits for addressing all children.
+   *
+   * @return The maximum number of children nodes.
+   */
+  public static int maxChildWidth() {
+    return 8;
   }
 
   /**
@@ -139,7 +145,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @return The updated Node
    */
   @Override
-  public StemNode<K, V> setLocation(Optional<BitSequence<K>> newLocation) {
+  public StemNode<K, V> setLocation(Optional<K> newLocation) {
     return new StemNode<K, V>(newLocation, stem, commitment, children);
   }
 
@@ -150,14 +156,14 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @return The updated Node
    */
   @Override
-  public Node<K, V> replaceLocation(BitSequence<K> newLocation) {
+  public Node<K, V> replaceLocation(K newLocation) {
     List<LeafNode<K, V>> newChildren = new ArrayList<>(maxChild());
     for (int i = 0; i < maxChild(); i++) {
       LeafNode<K, V> childNode = child(i);
       if (childNode instanceof NullLeafNode) {
         newChildren.add(childNode);
       } else {
-        BitSequence<K> childLocation = newLocation.add(i);
+        K childLocation = newLocation.add(i);
         newChildren.add(child(i).replaceLocation(childLocation));
       }
     }
@@ -215,8 +221,22 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   @Override
   public Bytes encode() {
-    return Bytes.concatenate(
-        Bytes.of(stem.encode()), commitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY));
+    List<Bytes> components = new ArrayList<>();
+    K loc =
+        location.orElseThrow(
+            () -> new RuntimeException("Cannot encode InternalNode without location"));
+    components.add(
+        commitment.orElseThrow(
+            () -> new RuntimeException("Cannot encode InternalNode without commitment")));
+    components.add(Bytes.of(loc.length()));
+    for (int i = 0; i < maxChild(); i++) {
+      LeafNode<K, V> child = children.get(i);
+      if (child instanceof ValueNode && child.value.isPresent()) {
+        components.add(Bytes.of(i));
+	components.add(((ValueNode<K, V>) child).valueSerializer.apply(child.value.get()));
+      }
+    }
+    return Bytes.concatenate(components);
   }
 
   /**
@@ -256,31 +276,30 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
    */
   @Override
   public String toDot(Boolean showNullNodes) {
-    String loc = location.map(lc -> lc.toBinaryString()).orElse("");
+    String loc = location.map(lc -> lc.toHexString()).orElse("");
     StringBuilder result =
         new StringBuilder()
+            .append("\n")
             .append(getName())
             .append(loc)
-            .append(" [label=\"S: ")
-            .append(loc)
-            .append("\nStem: ")
-            .append(stem.toBinaryString())
-            .append("\nCommitment: ")
+            .append(" [stem=")
+            .append(stem.toHexString())
+            .append(",commitment=")
             .append(commitment.map(x -> (Bytes) x).orElse(Bytes.EMPTY))
-            .append("\"]\n");
+            .append("]");
 
     for (Node<K, V> child : children) {
-      String edgeString =
-          getName()
+      if (!(child instanceof NullLeafNode) || showNullNodes) {
+        result.append(
+	  "\n"
+              + getName()
               + loc
               + " -> "
               + child.getName()
-              + child.location.map(lc -> lc.toBinaryString()).orElse("")
-              + "\n";
-
-      if (showNullNodes || !result.toString().contains(edgeString)) {
-        result.append(edgeString);
+              + child.location.map(lc -> lc.toHexString()).orElse(""));
       }
+    }
+    for (Node<K, V> child : children) {
       result.append(child.toDot(showNullNodes));
     }
     return result.toString();

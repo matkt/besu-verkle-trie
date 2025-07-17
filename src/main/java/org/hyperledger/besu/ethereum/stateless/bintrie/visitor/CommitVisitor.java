@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.stateless.bintrie.visitor;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
-import org.hyperledger.besu.ethereum.stateless.bintrie.NodeUpdater;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.InternalNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.LeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
@@ -24,6 +23,9 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullLeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
+import org.hyperledger.besu.ethereum.trie.NodeUpdater;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Class representing a visitor for traversing nodes in a Trie tree to find a node based on a path.
@@ -35,80 +37,107 @@ public class CommitVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
   /** The NodeUpdater used to store changes in the Trie structure. */
   protected final NodeUpdater nodeUpdater;
 
-  public final BitSequence<K> path;
-  private int depth;
-
-  public CommitVisitor(final NodeUpdater nodeUpdater, final BitSequence<K> path) {
-    if (path == null) {
-      throw new IllegalArgumentException("CommitVisitor's path cannot be null");
-    }
-    if (path.length() > Node.KEY_SIZE) {
-      throw new IllegalArgumentException(
-          String.format("CommitVisitor's path's size cannot be more than %s", Node.KEY_SIZE));
-    }
+  public CommitVisitor(final NodeUpdater nodeUpdater) {
     this.nodeUpdater = nodeUpdater;
-    this.path = path;
-    this.depth = -1;
-  }
-
-  public int getDepth() {
-    return depth;
   }
 
   /**
-   * Visits a internalNode to determine the node matching a given path.
+   * Visits a internalNode.
    *
    * @param internalNode The internalNode being visited.
    * @return The matching node or NULL_NODE_RESULT if not found.
    */
   @Override
   public Node<K, V> visit(InternalNode<K, V> internalNode) {
-    throw new UnsupportedOperationException("TODO");
+    if (!internalNode.isDirty()) {
+      return internalNode;
+    }
+    if (internalNode.commitment.isEmpty()) {
+      throw new RuntimeException("Cannot persist node without commitment");
+    }
+    if (internalNode.location.isEmpty()) {
+      throw new RuntimeException("Cannot persist node without location");
+    }
+    Bytes loc = Bytes.wrap(internalNode.location.get().encode());
+    internalNode.left.accept(this);
+    internalNode.right.accept(this);
+    System.out.println(String.format("Storing Internal %s -> %s -> %s", internalNode.location.get().toHexString(), loc, internalNode.getEncodedValue()));
+    nodeUpdater.store(loc, null, internalNode.getEncodedValue());
+    internalNode.markClean();
+    return internalNode;
   }
 
   /**
-   * Visits a stemNode to determine the node matching a given path.
+   * Visits a stemNode.
    *
    * @param stemNode The stemNode being visited.
    * @return The matching node or NULL_NODE_RESULT if not found.
    */
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
-    throw new UnsupportedOperationException("TODO");
+    if (!stemNode.isDirty()) {
+      return stemNode;
+    }
+    if (stemNode.commitment.isEmpty()) {
+      throw new RuntimeException("Cannot persist node without commitment");
+    }
+    if (stemNode.location.isEmpty()) {
+      throw new RuntimeException("Cannot persist node without location");
+    }
+    for (int i = 0; i < StemNode.maxChild(); ++i) {
+      stemNode.child(i).accept(this);
+    }
+    Bytes key = Bytes.wrap(stemNode.stem.encode());
+    System.out.println(String.format("Storing Stem %s -> %s -> %s",stemNode.location.get().toHexString(), key, stemNode.getEncodedValue()));
+    nodeUpdater.store(key, null, stemNode.getEncodedValue());
+    stemNode.markClean();
+    K location = stemNode.location.get();
+    if (location.length() == 0) {
+      nodeUpdater.store(Bytes.wrap(location.encode()), null, Bytes.wrap(stemNode.stem.toBytes()));
+    }
+    return stemNode;
   }
 
   /**
-   * Visits a NullNode to determine the matching node based on a given path.
+   * Visits a NullNode.
    *
    * @param nullNode The NullNode being visited.
    * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
    */
   @Override
   public Node<K, V> visit(NullNode<K, V> nullNode) {
-    depth++;
     return nullNode;
   }
 
   /**
-   * Visits a ValueNode to determine the matching node based on a given path.
+   * Visits a ValueNode.
    *
    * @param valueNode The NullNode being visited.
    * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
    */
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
-    throw new UnsupportedOperationException("TODO");
+    if (!valueNode.isDirty()) {
+      return valueNode;
+    }
+    if (valueNode.location.isEmpty()) {
+      throw new RuntimeException("Cannot persist node without location");
+    }
+    Bytes key = Bytes.wrap(valueNode.location.get().encode());
+    System.out.println(String.format("Storing Value %s -> %s -> %s", valueNode.location.get().toHexString(), key, valueNode.getEncodedValue()));
+    nodeUpdater.store(key, null, valueNode.getEncodedValue());
+    valueNode.markClean();
+    return valueNode;
   }
 
   /**
-   * Visits a NullLeafNode to determine the matching node based on a given path.
+   * Visits a NullLeafNode.
    *
    * @param nullLeafNode The NullNode being visited.
    * @return The NULL_NODE_RESULT since NullNode represents a missing node on the path.
    */
   @Override
   public LeafNode<K, V> visit(NullLeafNode<K, V> nullLeafNode) {
-    depth++;
     return nullLeafNode;
   }
 }

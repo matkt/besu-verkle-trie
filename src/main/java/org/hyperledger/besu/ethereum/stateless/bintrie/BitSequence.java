@@ -39,6 +39,13 @@ public abstract class BitSequence<T extends BitSequence<T>> implements Comparabl
   public abstract String toBinaryString();
 
   /**
+   * The Hex+ string representation of the BitSequence.
+   *
+   * @return A byte array representation of the node.
+   */
+  public abstract String toHexString();
+
+  /**
    * The binary string representation of the BitSequence.
    *
    * @return A byte array representation of the node.
@@ -68,12 +75,21 @@ public abstract class BitSequence<T extends BitSequence<T>> implements Comparabl
   public abstract T add(boolean bit);
 
   /**
-   * bit at a given index to a given value
+   * Add minimal BitSequence representation of suffix to the sequence.
    *
    * @param suffix The integer value to add at the end of the sequence.
    * @return New BitSequence with added bit at the tail.
    */
   public abstract T add(int suffix);
+
+  /**
+   * Add fixed-width BitSequence representation of suffix to the sequence.
+   *
+   * @param suffix The integer value to add at the end of the sequence.
+   * @param width The fixed number of bits in the sequence.
+   * @return New BitSequence with added bit at the tail.
+   */
+  public abstract T add(int suffix, int width);
 
   /**
    * Get a bit at a given index.
@@ -159,6 +175,17 @@ public abstract class BitSequence<T extends BitSequence<T>> implements Comparabl
       result = result.add(other.get(i));
     }
     return result;
+  }
+
+  /**
+   * Concatenate an encoded BitSequence
+   *
+   * @param encodedOther BitSequence to concatenate
+   * @return Concatenates BitSequence
+   */
+  public T concatenate(byte[] encodedOther) {
+    T other = factory().decode(encodedOther);
+    return concatenate(other);
   }
 
   /**

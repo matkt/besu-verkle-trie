@@ -53,7 +53,7 @@ public class NullLeafNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @return The updated Node
    */
   @Override
-  public NullLeafNode<K, V> setLocation(Optional<BitSequence<K>> newLocation) {
+  public NullLeafNode<K, V> setLocation(Optional<K> newLocation) {
     return this;
   }
 
@@ -64,7 +64,7 @@ public class NullLeafNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @return The updated Node
    */
   @Override
-  public LeafNode<K, V> replaceLocation(BitSequence<K> newLocation) {
+  public LeafNode<K, V> replaceLocation(K newLocation) {
     return this;
   }
 
@@ -100,16 +100,12 @@ public class NullLeafNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
   /**
    * Generates DOT representation for the NullNode.
    *
-   * @param showRepeatingEdges Should show repeating edges.
+   * @param showNullNodes Should show repeating edges.
    * @return DOT representation of the NullNode.
    */
   @Override
-  public String toDot(Boolean showRepeatingEdges) {
-    String loc = location.map(lc -> lc.toBinaryString()).orElse("");
-    if (!showRepeatingEdges) {
-      return "";
-    }
-    return getName() + loc + " [label=\"NL: " + loc + "\"]\n";
+  public String toDot(Boolean showNullNodes) {
+    return "";
   }
 
   private static final NullLeafNode<?, ?> nullLeafNode = new NullLeafNode<>();

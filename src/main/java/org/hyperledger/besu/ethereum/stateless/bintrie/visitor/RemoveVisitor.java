@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
  * @param <V> The type of node values.
  */
 public class RemoveVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
-  public final BitSequence<K> path;
+  public final K path;
   private int depth;
 
-  public RemoveVisitor(final BitSequence<K> path) {
+  public RemoveVisitor(final K path) {
     if (path == null) {
       throw new IllegalArgumentException("RemoveVisitor's path cannot be null");
     }
@@ -82,7 +82,7 @@ public class RemoveVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
     depth++;
     final K prefix = path.commonPrefix(stemNode.stem);
     if (prefix.length() < stemNode.stem.length()) {
-      return NullNode.nullNode();
+      return NullNode.node();
     }
     int suffix = path.slice(Node.STEM_SIZE).toInt();
     final LeafNode<K, V> childToVisit = stemNode.child(suffix);

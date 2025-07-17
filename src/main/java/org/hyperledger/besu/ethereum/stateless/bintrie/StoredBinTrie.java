@@ -15,9 +15,25 @@
  */
 package org.hyperledger.besu.ethereum.stateless.bintrie;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.ethereum.stateless.bintrie.factory.NodeFactory;
 
-public interface NodeUpdater {
-  void store(Bytes location, Bytes32 hash, Bytes value);
+/**
+ * Implementation of a bintrie Trie with nodes saved in storage.
+ *
+ * @param <K> The type of keys in the bintrie Trie.
+ * @param <V> The type of values in the bintrie Trie.
+ */
+public class StoredBinTrie<K extends BitSequence<K>, V> extends SimpleBinTrie<K, V> {
+  /** NodeFactory that load nodes from storage */
+  protected final NodeFactory<K, V> nodeFactory;
+
+  /**
+   * Create a trie.
+   *
+   * @param nodeFactory The {@link NodeFactory} to retrieve node.
+   */
+  public StoredBinTrie(final NodeFactory<K, V> nodeFactory) {
+    super(nodeFactory.retrieveRoot());
+    this.nodeFactory = nodeFactory;
+  }
 }

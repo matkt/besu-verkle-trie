@@ -38,7 +38,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    *
    * @param location The location of the node in the tree.
    */
-  public ValueNode(final Optional<BitSequence<K>> location) {
+  public ValueNode(final Optional<K> location) {
     super(location, Optional.empty());
     valueSerializer = val -> (Bytes) val;
   }
@@ -49,7 +49,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @param location The location of the node in the tree.
    * @param value The value associated with the node.
    */
-  public ValueNode(final Optional<BitSequence<K>> location, final Optional<V> value) {
+  public ValueNode(final Optional<K> location, final Optional<V> value) {
     super(location, value);
     this.valueSerializer = val -> (Bytes) val;
   }
@@ -62,7 +62,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @param valueSerializer Serializer for values.
    */
   public ValueNode(
-      final Optional<BitSequence<K>> location,
+      final Optional<K> location,
       final Optional<V> value,
       final Function<V, Bytes> valueSerializer) {
     super(location, value);
@@ -78,7 +78,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @param valueSerializer Serializer for values.
    */
   public ValueNode(
-      final Optional<BitSequence<K>> location,
+      final Optional<K> location,
       final Optional<Bytes32> commitment,
       final Optional<V> value,
       final Function<V, Bytes> valueSerializer) {
@@ -104,7 +104,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @return The updated Node
    */
   @Override
-  public ValueNode<K, V> setLocation(Optional<BitSequence<K>> newLocation) {
+  public ValueNode<K, V> setLocation(Optional<K> newLocation) {
     return this;
   }
 
@@ -115,7 +115,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @return The updated Node
    */
   @Override
-  public ValueNode<K, V> replaceLocation(final BitSequence<K> newLocation) {
+  public ValueNode<K, V> replaceLocation(final K newLocation) {
     return new ValueNode<K, V>(Optional.of(newLocation), value, valueSerializer);
   }
 
@@ -140,7 +140,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   @Override
   public Bytes encode() {
-    return value.isPresent() ? valueSerializer.apply(value.get()) : Bytes.EMPTY;
+    return value.map(valueSerializer).orElse(Bytes.EMPTY);
   }
 
   /**
@@ -164,26 +164,11 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   @Override
   public String toDot(Boolean showNullNodes) {
-    BitSequence<K> loc = location.get();
-    String locString = loc.toBinaryString();
-    int suffix = loc.length() > 0 ? loc.slice(loc.length() - 1).toInt() : -1;
-
-    return getName()
-        + locString
-        + " [label=\"L: "
-        + locString
-        + "\nSuffix: "
-        + suffix
-        + "\"]\n"
-        + getName()
-        + locString
-        + " -> "
-        + "Value"
-        + locString
-        + "\nValue"
-        + locString
-        + " [label=\"Value: "
-        + value.orElse(null)
-        + "\"]\n";
+    return "\n" 
+	+ getName()
+        + location.map(x -> x.toHexString()).orElse("")
+        + " [value="
+        + value.map(valueSerializer).map(x -> x.toHexString()).orElse(null)
+        + "]";
   }
 }
