@@ -164,8 +164,8 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   @Override
   public String toDot(Boolean showNullNodes) {
-    return "\n" 
-	+ getName()
+    return "\n"
+        + getName()
         + location.map(x -> x.toHexString()).orElse("")
         + " [value="
         + value.map(valueSerializer).map(x -> x.toHexString()).orElse(null)

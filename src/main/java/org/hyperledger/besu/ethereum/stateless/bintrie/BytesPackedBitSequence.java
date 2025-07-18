@@ -84,13 +84,13 @@ public class BytesPackedBitSequence extends BitSequence<BytesPackedBitSequence> 
     for (i = 0; i < bitLength - 3; i += 4) {
       int value = 0;
       for (int j = 0; j < 4; j++) {
-	value = (value << 1) | (get(i + j) ? 1 : 0);
+        value = (value << 1) | (get(i + j) ? 1 : 0);
       }
       sb.append(String.format("%01X", value));
     }
     // Remaining 0-3 bits
     if (i < bitLength - 1) {
-      sb.append(".");  // There is at least 1 remaining bit
+      sb.append("."); // There is at least 1 remaining bit
     }
     for (int j = i; j < bitLength; j++) {
       sb.append(get(i) ? '1' : '0');

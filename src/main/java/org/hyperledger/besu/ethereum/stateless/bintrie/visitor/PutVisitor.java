@@ -62,7 +62,8 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   @Override
   public Node<K, V> visit(final InternalNode<K, V> internalNode) {
     depth++;
-    // System.out.println(String.format("PutVisit Internal depth=%s, branch=%s", depth, path.get(depth)));
+    // System.out.println(String.format("PutVisit Internal depth=%s, branch=%s", depth,
+    // path.get(depth)));
     Node<K, V> result;
     if (path.get(depth)) {
       result =
@@ -95,11 +96,13 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
     if (stemNode.stem.compareTo(newStem) == 0) { // Same stem => skip to leaf in StemNode
       depth++;
       final int suffix = path.slice(Node.STEM_SIZE).toInt();
-      // System.out.println(String.format("PutVisit Same Stem: depth=%s, stem=%s, suffix=%s", depth, stemNode.stem.toHexString(), suffix));
+      // System.out.println(String.format("PutVisit Same Stem: depth=%s, stem=%s, suffix=%s", depth,
+      // stemNode.stem.toHexString(), suffix));
       Node<K, V> result = stemNode.replaceChild(suffix, stemNode.child(suffix).accept(this));
       return result;
     } else { // Divergent stems => push StemNode one level down
-      // System.out.println(String.format("PutVisit Other Stem: depth=%s, stem=%s, branch=%s", depth, stemNode.stem.toHexString(), stemNode.stem.get(depth + 1)));
+      // System.out.println(String.format("PutVisit Other Stem: depth=%s, stem=%s, branch=%s",
+      // depth, stemNode.stem.toHexString(), stemNode.stem.get(depth + 1)));
       InternalNode<K, V> result;
       if (stemNode.stem.get(depth + 1)) {
         result =
@@ -127,8 +130,9 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    */
   @Override
   public Node<K, V> visit(final NullNode<K, V> nullNode) {
-    
-      // System.out.println(String.format("Put visit Null: depth=%s, loc=%s, stem=%s", depth+1, path.slice(0, depth+1).toHexString(), path.slice(0, Node.STEM_SIZE).toHexString()));
+
+    // System.out.println(String.format("Put visit Null: depth=%s, loc=%s, stem=%s", depth+1,
+    // path.slice(0, depth+1).toHexString(), path.slice(0, Node.STEM_SIZE).toHexString()));
     return new StemNode<K, V>(Optional.of(path.slice(0, depth + 1)), path.slice(0, Node.STEM_SIZE))
         .accept(this);
   }

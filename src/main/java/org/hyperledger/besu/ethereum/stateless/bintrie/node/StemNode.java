@@ -233,7 +233,7 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
       LeafNode<K, V> child = children.get(i);
       if (child instanceof ValueNode && child.value.isPresent()) {
         components.add(Bytes.of(i));
-	components.add(((ValueNode<K, V>) child).valueSerializer.apply(child.value.get()));
+        components.add(((ValueNode<K, V>) child).valueSerializer.apply(child.value.get()));
       }
     }
     return Bytes.concatenate(components);
@@ -291,12 +291,12 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
     for (Node<K, V> child : children) {
       if (!(child instanceof NullLeafNode) || showNullNodes) {
         result.append(
-	  "\n"
-              + getName()
-              + loc
-              + " -> "
-              + child.getName()
-              + child.location.map(lc -> lc.toHexString()).orElse(""));
+            "\n"
+                + getName()
+                + loc
+                + " -> "
+                + child.getName()
+                + child.location.map(lc -> lc.toHexString()).orElse(""));
       }
     }
     for (Node<K, V> child : children) {

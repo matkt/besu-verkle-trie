@@ -235,7 +235,7 @@ public class InternalNode<K extends BitSequence<K>, V> extends Node<K, V> {
 
     StringBuilder result =
         new StringBuilder()
-	    .append("\n")
+            .append("\n")
             .append(getName())
             .append(loc)
             .append(" [commitment=")

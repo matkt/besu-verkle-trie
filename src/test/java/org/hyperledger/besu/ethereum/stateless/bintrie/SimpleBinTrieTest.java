@@ -71,7 +71,6 @@ public class SimpleBinTrieTest {
     assertThat(trie.getRoot()).as("Stem root").isInstanceOf(StemNode.class);
     trie.remove(key);
     trie.remove(key);
-    trie.flatten();
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
   }
 
@@ -322,7 +321,6 @@ public class SimpleBinTrieTest {
     trie.remove(key3);
     trie.remove(key1);
     trie.remove(key2);
-    trie.flatten();
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
   }
 
@@ -374,15 +372,12 @@ public class SimpleBinTrieTest {
     trie.remove(key4);
     trie.remove(key5);
     trie.remove(key6);
-    trie.flatten();
     assertThat(trie.getRootHash()).isEqualTo(expectedIntermediateRootHash2);
     trie.remove(key3);
-    trie.flatten();
     assertThat(trie.getRootHash()).isEqualTo(expectedIntermediateRootHash);
     trie.remove(key1);
     trie.remove(key0);
     trie.remove(key2);
-    trie.flatten();
     assertThat(trie.getRootHash()).isEqualTo(Bytes32.ZERO);
   }
 }

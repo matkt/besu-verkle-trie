@@ -102,13 +102,13 @@ public class BytesBitSequence extends BitSequence<BytesBitSequence> {
     for (i = 0; i < bitLength - 3; i += 4) {
       int value = 0;
       for (int j = 0; j < 4; j++) {
-	value = (value << 1) | data[i + j];
+        value = (value << 1) | data[i + j];
       }
       sb.append(String.format("%01x", value));
     }
     // Remaining 0-3 bits
     if (i < bitLength) {
-      sb.append(".");  // There is at least 1 remaining bit
+      sb.append("."); // There is at least 1 remaining bit
     }
     for (int j = i; j < bitLength; j++) {
       sb.append(get(j) ? '1' : '0');
