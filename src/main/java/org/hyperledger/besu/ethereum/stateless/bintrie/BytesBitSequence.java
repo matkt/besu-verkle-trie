@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.stateless.bintrie;
 
 import java.util.Arrays;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * Class representing a sequence of bits, used as prefixes in a Binary Trie.
  *
@@ -59,6 +61,10 @@ public class BytesBitSequence extends BitSequence<BytesBitSequence> {
 
   public static BytesBitSequence fromByte(byte value) {
     return FACTORY.fromByte(value);
+  }
+
+  public static BytesBitSequence fromBytes(Bytes value) {
+    return FACTORY.fromBytes(value);
   }
 
   public static BytesBitSequence decode(byte[] encoded) {

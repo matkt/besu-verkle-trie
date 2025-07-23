@@ -15,6 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.stateless.bintrie;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public interface BitSequenceFactory<K extends BitSequence<K>> {
   /**
    * Default empty Sequence.
@@ -46,6 +48,14 @@ public interface BitSequenceFactory<K extends BitSequence<K>> {
    * @return BitSequence representing value in big-endian format.
    */
   public K fromInteger(int value);
+
+  /**
+   * Get a BitSequence from Bytes.
+   *
+   * @param value Integer value.
+   * @return BitSequence representing value in big-endian format.
+   */
+  public K fromBytes(Bytes value);
 
   /**
    * Decode a BitSequence from the encoded form.

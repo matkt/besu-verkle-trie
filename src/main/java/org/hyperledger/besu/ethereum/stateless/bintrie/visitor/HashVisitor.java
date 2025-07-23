@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.stateless.bintrie.visitor;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
+import org.hyperledger.besu.ethereum.stateless.bintrie.hasher.Hasher;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.InternalNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.LeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
@@ -30,7 +31,6 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.crypto.digests.Blake3Digest;
 
 /**
  * Class for gathering Trie's commitments.
@@ -39,40 +39,10 @@ import org.bouncycastle.crypto.digests.Blake3Digest;
  * @param <V> The type of node values.
  */
 public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
-  private final Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
+  private final Hasher hasher;
 
   public HashVisitor() {
-    digest.reset();
-  }
-
-  private Bytes32 hash(Bytes32 value) {
-    byte[] hash = new byte[digest.getDigestSize()];
-    digest.reset();
-    digest.update(value.toArray(), 0, value.size());
-    digest.doFinal(hash, 0);
-    Bytes32 result = (Bytes32) Bytes.of(hash);
-    digest.reset();
-    return result;
-  }
-
-  private Bytes32 hash(Optional<Bytes32> left, Optional<Bytes32> right) {
-    Bytes32 leftValue = left.orElse(Node.EMPTY_COMMITMENT);
-    Bytes32 rightValue = right.orElse(Node.EMPTY_COMMITMENT);
-    return hash(leftValue, rightValue);
-  }
-
-  private Bytes32 hash(Bytes32 leftValue, Bytes32 rightValue) {
-    if (leftValue == Node.EMPTY_COMMITMENT && rightValue == Node.EMPTY_COMMITMENT) {
-      return Node.EMPTY_COMMITMENT;
-    }
-    byte[] rawDigest = new byte[digest.getDigestSize()];
-    digest.reset();
-    digest.update(leftValue.toArray(), 0, leftValue.size());
-    digest.update(rightValue.toArray(), 0, rightValue.size());
-    digest.doFinal(rawDigest, 0);
-    Bytes32 result = (Bytes32) Bytes.of(rawDigest);
-    digest.reset();
-    return result;
+    hasher = new Hasher();
   }
 
   /**
@@ -89,7 +59,7 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
 
     Node<K, V> left = internalNode.left.accept(this);
     Node<K, V> right = internalNode.right.accept(this);
-    Optional<Bytes32> newCommitment = Optional.of(hash(left.commitment, right.commitment));
+    Optional<Bytes32> newCommitment = Optional.of(hasher.hash(left.commitment, right.commitment));
 
     // System.out.println(
     // String.format(
@@ -129,7 +99,7 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
       for (int i = 0; i < commitments.size(); i += 2) {
         Bytes32 left = commitments.get(i);
         Bytes32 right = commitments.get(i + 1);
-        Bytes32 rolledCommitment = hash(left, right);
+        Bytes32 rolledCommitment = hasher.hash(left, right);
         rolledUp.add(rolledCommitment);
         // if (rolledCommitment != Node.EMPTY_COMMITMENT) {
         // System.out.println(
@@ -141,13 +111,15 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
       commitments = rolledUp;
     }
 
-    // System.out.println(String.format("Stem values commitment: %s", commitments.get(0)));
+    // System.out.println(String.format("Stem values commitment: %s",
+    // commitments.get(0)));
     // H(stem + 0x00 + valuesCommitment)
     Bytes32 stemBytes = Bytes32.rightPad(Bytes.of(stemNode.stem.toBytes()));
-    Optional<Bytes32> newCommitment = Optional.of(hash(stemBytes, commitments.get(0)));
+    Optional<Bytes32> newCommitment = Optional.of(hasher.hash(stemBytes, commitments.get(0)));
     // System.out.println(
     // String.format(
-    // "Stem commitment: %s -> %s", Bytes.wrap(stemNode.stem.toBytes()), newCommitment));
+    // "Stem commitment: %s -> %s", Bytes.wrap(stemNode.stem.toBytes()),
+    // newCommitment));
     return new StemNode<K, V>(stemNode.location, stemNode.stem, newCommitment, children);
   }
 
@@ -171,11 +143,12 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
     Bytes32 valueSerialized = (Bytes32) valueNode.valueSerializer.apply(valueNode.value.get());
-    Optional<Bytes32> newCommitment = Optional.of(hash(valueSerialized));
+    Optional<Bytes32> newCommitment = Optional.of(hasher.hash(valueSerialized));
     // BitSequence<K> loc = valueNode.location.get();
     // System.out.println(
     // String.format(
-    // "Value commitment at %s:\n %s -> %s", loc.toBinaryString(), valueSerialized, newCommitment));
+    // "Value commitment at %s:\n %s -> %s", loc.toBinaryString(), valueSerialized,
+    // newCommitment));
     return valueNode.setCommitment(newCommitment);
   }
 

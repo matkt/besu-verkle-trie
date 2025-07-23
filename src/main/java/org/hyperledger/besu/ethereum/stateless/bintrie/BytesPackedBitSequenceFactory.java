@@ -15,6 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.stateless.bintrie;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class BytesPackedBitSequenceFactory implements BitSequenceFactory<BytesPackedBitSequence> {
   /**
    * Default empty Sequence.
@@ -80,6 +82,17 @@ public class BytesPackedBitSequenceFactory implements BitSequenceFactory<BytesPa
   public BytesPackedBitSequence fromInteger(int value) {
     // Should implement more efficient conversion
     return fromBinaryString(Integer.toBinaryString(value));
+  }
+
+  /**
+   * Get a BytesPackedBitSequence from a Bytes
+   *
+   * @param value Bytes value.
+   * @return BytesPackedBitSequence representing value in big-endian format.
+   */
+  @Override
+  public BytesPackedBitSequence fromBytes(Bytes value) {
+    return fromHexString(value.toHexString());
   }
 
   /**

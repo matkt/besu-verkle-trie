@@ -15,6 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.stateless.bintrie;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class BytesBitSequenceFactory implements BitSequenceFactory<BytesBitSequence> {
   /**
    * Default empty Sequence.
@@ -93,6 +95,21 @@ public class BytesBitSequenceFactory implements BitSequenceFactory<BytesBitSeque
   @Override
   public BytesBitSequence fromInteger(int value) {
     return empty().add(value);
+  }
+
+  /**
+   * Get a BytesBitSequence from a Bytes
+   *
+   * @param value Bytes value.
+   * @return BytesBitSequence representing value in big-endian format.
+   */
+  @Override
+  public BytesBitSequence fromBytes(Bytes value) {
+    BytesBitSequence result = new BytesBitSequence(8 * value.size());
+    for (int i = 0; i < value.size(); i++) {
+      result.setAll(8 * i, value.get(i));
+    }
+    return result;
   }
 
   /**
