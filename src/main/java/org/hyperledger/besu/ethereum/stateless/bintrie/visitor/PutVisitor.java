@@ -36,6 +36,7 @@ import java.util.Optional;
  */
 public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
   public final K path;
+  private Optional<V> oldValue;
   public final V value;
   private int depth = -1;
 
@@ -48,6 +49,7 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
     assert path.length() <= Node.KEY_SIZE;
     this.path = path;
     this.value = value;
+    this.oldValue = Optional.empty();
     // System.out.println(String.format("PutVisit path=%s, value=%s",
     // Bytes.wrap(path.toBytes()),
     // value));
@@ -130,7 +132,6 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    */
   @Override
   public Node<K, V> visit(final NullNode<K, V> nullNode) {
-
     // System.out.println(String.format("Put visit Null: depth=%s, loc=%s, stem=%s", depth+1,
     // path.slice(0, depth+1).toHexString(), path.slice(0, Node.STEM_SIZE).toHexString()));
     return new StemNode<K, V>(Optional.of(path.slice(0, depth + 1)), path.slice(0, Node.STEM_SIZE))
@@ -146,6 +147,9 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   @Override
   public LeafNode<K, V> visit(final ValueNode<K, V> valueNode) {
     depth++;
+    if (!valueNode.isDirty()) {
+      oldValue = valueNode.value;
+    }
     return new ValueNode<K, V>(valueNode.location, Optional.of(value), valueNode.valueSerializer);
   }
 
@@ -158,8 +162,18 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   @Override
   public LeafNode<K, V> visit(final NullLeafNode<K, V> nullLeafNode) {
     depth++;
+    oldValue = Optional.empty();
     return new ValueNode<K, V>(
         Optional.of(path.slice(0, depth - 1).concatenate(path.slice(Node.STEM_SIZE))),
         Optional.of(value));
+  }
+
+  /**
+   * Return the old value that was replaced, or optional empty if none.
+   *
+   * @return Previous value before put, or empty.
+   */
+  public Optional<V> getOldValue() {
+    return oldValue;
   }
 }

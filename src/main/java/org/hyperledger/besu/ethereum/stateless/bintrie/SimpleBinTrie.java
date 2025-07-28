@@ -99,8 +99,9 @@ public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V>
   public Optional<V> put(final K key, final V value) {
     checkNotNull(key);
     checkNotNull(value);
-    this.root = root.accept(new PutVisitor<K, V>(key, value));
-    return Optional.of(value);
+    final PutVisitor<K, V> kvPutVisitor = new PutVisitor<>(key, value);
+    this.root = root.accept(kvPutVisitor);
+    return kvPutVisitor.getOldValue();
   }
 
   /**

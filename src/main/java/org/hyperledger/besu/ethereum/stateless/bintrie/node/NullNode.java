@@ -114,4 +114,9 @@ public class NullNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public static <T extends BitSequence<T>, U> NullNode<T, U> node() {
     return (NullNode<T, U>) nullNode;
   }
+
+  @Override
+  public boolean isDirty() {
+    return false;
+  }
 }

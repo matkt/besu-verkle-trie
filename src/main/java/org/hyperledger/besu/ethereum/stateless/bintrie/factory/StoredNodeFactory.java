@@ -149,6 +149,7 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
                 ? location.concatenate(leftExtension.toArray())
                 : location.add(false));
     left = new StoredNode<K, V>(this, leftLocation, commitment);
+    left.markClean();
 
     rightLocation =
         Optional.of(
@@ -156,8 +157,12 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
                 ? location.concatenate(rightExtension.toArray())
                 : location.add(true));
     right = new StoredNode<K, V>(this, rightLocation, commitment);
+    right.markClean();
 
-    return new InternalNode<K, V>(Optional.of(location), commitment, left, right);
+    final InternalNode<K, V> internalNode =
+        new InternalNode<>(Optional.of(location), commitment, left, right);
+    internalNode.markClean();
+    return internalNode;
   }
 
   /**
@@ -167,7 +172,7 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
    * @param encodedValues List of Bytes values retrieved from storage.
    * @return A BranchNode instance.
    */
-  StemNode<K, V> decodeStemNode(K stem, Bytes encodedValues) {
+  public StemNode<K, V> decodeStemNode(K stem, Bytes encodedValues) {
 
     // Decode encodedValues
     int cursor = 0;
@@ -184,12 +189,17 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
       int suffix = Byte.toUnsignedInt(encodedValues.get(cursor));
       V value = valueDeserializer.apply(encodedValues.slice(cursor + 1, 32));
       K loc = location.add(suffix, StemNode.maxChildWidth());
-      children.set(suffix, new ValueNode<K, V>(Optional.of(loc), Optional.of(value)));
+      final ValueNode<K, V> valueNode = new ValueNode<>(Optional.of(loc), Optional.of(value));
+      valueNode.markClean();
+      children.set(suffix, valueNode);
       cursor += 33;
     }
     assert encodedValues.size() == cursor : "Unread bytes in stored StemNode representation";
 
     System.out.println("Loaded StemNode location " + location.toHexString());
-    return new StemNode<K, V>(Optional.of(location), stem, commitment, children);
+    final StemNode<K, V> stemNode =
+        new StemNode<>(Optional.of(location), stem, commitment, children);
+    stemNode.markClean();
+    return stemNode;
   }
 }

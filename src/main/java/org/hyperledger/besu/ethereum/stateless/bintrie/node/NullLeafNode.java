@@ -114,4 +114,9 @@ public class NullLeafNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
   public static <T extends BitSequence<T>, U> NullLeafNode<T, U> node() {
     return (NullLeafNode<T, U>) nullLeafNode;
   }
+
+  @Override
+  public boolean isDirty() {
+    return false;
+  }
 }
