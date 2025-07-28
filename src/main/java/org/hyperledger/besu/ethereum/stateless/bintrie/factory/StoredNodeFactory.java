@@ -79,7 +79,6 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
     Bytes32 hash = null; // For backward compatibilty purposes only.
     Optional<Bytes> maybeEncodedValues = nodeLoader.getNode(rootKey, hash);
     Bytes encodedValues = maybeEncodedValues.orElse(Bytes.EMPTY);
-    System.out.println(String.format("Retrieving RootNode %s", encodedValues));
     K loc =
         encodedValues.size() == 31
             ? keyFactory.fromHexString(encodedValues.toHexString())
@@ -101,11 +100,8 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
      * To distinguish internal from stem, we further need values.
      * Currently, they are distinguished by values length.
      */
-    System.out.println(String.format("Retrieving Node at location %s", location.toHexString()));
     Bytes32 hash = null; // For backward compatibilty purposes only.
     Optional<Bytes> maybeEncodedValues = nodeLoader.getNode(Bytes.wrap(location.encode()), hash);
-    System.out.println(
-        String.format("Retrieved %s -> %s", Bytes.wrap(location.encode()), maybeEncodedValues));
     if (maybeEncodedValues.isEmpty()) {
       return Optional.empty();
     }
@@ -129,7 +125,6 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
     Optional<K> leftLocation, rightLocation;
 
     // Decode encodedValues
-    System.out.println(String.format("EncodedValues: %s", encodedValues.toHexString()));
     int cursor = 0;
     Optional<Bytes32> commitment = Optional.of((Bytes32) encodedValues.slice(cursor, cursor + 32));
     cursor += 32;
@@ -196,7 +191,6 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
     }
     assert encodedValues.size() == cursor : "Unread bytes in stored StemNode representation";
 
-    System.out.println("Loaded StemNode location " + location.toHexString());
     final StemNode<K, V> stemNode =
         new StemNode<>(Optional.of(location), stem, commitment, children);
     stemNode.markClean();

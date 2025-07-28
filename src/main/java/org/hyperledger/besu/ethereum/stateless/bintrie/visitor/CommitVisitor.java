@@ -61,11 +61,7 @@ public class CommitVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
     Bytes loc = Bytes.wrap(internalNode.location.get().encode());
     internalNode.left.accept(this);
     internalNode.right.accept(this);
-    System.out.println(
-        String.format(
-            "Storing Internal %s -> %s -> %s",
-            internalNode.location.get().toHexString(), loc, internalNode.getEncodedValue()));
-    nodeUpdater.store(loc, null, internalNode.getEncodedValue());
+   nodeUpdater.store(loc, null, internalNode.getEncodedValue());
     internalNode.markClean();
     return internalNode;
   }
@@ -91,10 +87,6 @@ public class CommitVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
       stemNode.child(i).accept(this);
     }
     Bytes key = Bytes.wrap(stemNode.stem.encode());
-    System.out.println(
-        String.format(
-            "Storing Stem %s -> %s -> %s",
-            stemNode.location.get().toHexString(), key, stemNode.getEncodedValue()));
     nodeUpdater.store(key, null, stemNode.getEncodedValue());
     stemNode.markClean();
     K location = stemNode.location.get();
@@ -130,10 +122,6 @@ public class CommitVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
       throw new RuntimeException("Cannot persist node without location");
     }
     Bytes key = Bytes.wrap(valueNode.location.get().encode());
-    System.out.println(
-        String.format(
-            "Storing Value %s -> %s -> %s",
-            valueNode.location.get().toHexString(), key, valueNode.getEncodedValue()));
     nodeUpdater.store(key, null, valueNode.getEncodedValue());
     valueNode.markClean();
     return valueNode;
