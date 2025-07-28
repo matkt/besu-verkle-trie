@@ -15,9 +15,13 @@
  */
 package org.hyperledger.besu.ethereum.stateless.bintrie.hasher;
 
+import com.google.common.base.Suppliers;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -25,14 +29,14 @@ import org.bouncycastle.crypto.digests.Blake3Digest;
 
 /** Class for Hashing values. */
 public class Hasher {
-  private final Blake3Digest digest;
+
 
   public Hasher() {
-    digest = new Blake3Digest(Node.COMMITMENT_SIZE);
   }
 
-  public Bytes32 hash(Bytes32 value) {
-    byte[] hash = new byte[digest.getDigestSize()];
+  public Bytes32 hash(final Bytes32 value) {
+    final Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
+    final byte[] hash = new byte[digest.getDigestSize()];
     digest.reset();
     digest.update(value.toArray(), 0, value.size());
     digest.doFinal(hash, 0);
@@ -41,17 +45,18 @@ public class Hasher {
     return result;
   }
 
-  public Bytes32 hash(Optional<Bytes32> left, Optional<Bytes32> right) {
+  public Bytes32 hash(final Optional<Bytes32> left, final Optional<Bytes32> right) {
     Bytes32 leftValue = left.orElse(Node.EMPTY_COMMITMENT);
     Bytes32 rightValue = right.orElse(Node.EMPTY_COMMITMENT);
     return hash(leftValue, rightValue);
   }
 
-  public Bytes32 hash(Bytes32 leftValue, Bytes32 rightValue) {
+  public Bytes32 hash(final Bytes32 leftValue, final Bytes32 rightValue) {
     if (leftValue == Node.EMPTY_COMMITMENT && rightValue == Node.EMPTY_COMMITMENT) {
       return Node.EMPTY_COMMITMENT;
     }
-    byte[] rawDigest = new byte[digest.getDigestSize()];
+    final Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
+    final byte[] rawDigest = new byte[digest.getDigestSize()];
     digest.reset();
     digest.update(leftValue.toArray(), 0, leftValue.size());
     digest.update(rightValue.toArray(), 0, rightValue.size());
