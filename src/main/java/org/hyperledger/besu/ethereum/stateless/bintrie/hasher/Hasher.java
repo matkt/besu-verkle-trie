@@ -15,13 +15,9 @@
  */
 package org.hyperledger.besu.ethereum.stateless.bintrie.hasher;
 
-import com.google.common.base.Suppliers;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -30,9 +26,7 @@ import org.bouncycastle.crypto.digests.Blake3Digest;
 /** Class for Hashing values. */
 public class Hasher {
 
-
-  public Hasher() {
-  }
+  public Hasher() {}
 
   public Bytes32 hash(final Bytes32 value) {
     final Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);

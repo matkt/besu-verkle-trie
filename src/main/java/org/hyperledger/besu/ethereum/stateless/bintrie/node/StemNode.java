@@ -223,11 +223,10 @@ public class StemNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public Bytes encode() {
     List<Bytes> components = new ArrayList<>();
     K loc =
-        location.orElseThrow(
-            () -> new RuntimeException("Cannot encode InternalNode without location"));
+        location.orElseThrow(() -> new RuntimeException("Cannot encode StemNode without location"));
     components.add(
         commitment.orElseThrow(
-            () -> new RuntimeException("Cannot encode InternalNode without commitment")));
+            () -> new RuntimeException("Cannot encode StemNode without commitment")));
     components.add(Bytes.of(loc.length()));
     for (int i = 0; i < maxChild(); i++) {
       LeafNode<K, V> child = children.get(i);

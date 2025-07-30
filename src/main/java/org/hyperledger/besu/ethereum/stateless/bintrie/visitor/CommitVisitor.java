@@ -61,7 +61,7 @@ public class CommitVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
     Bytes loc = Bytes.wrap(internalNode.location.get().encode());
     internalNode.left.accept(this);
     internalNode.right.accept(this);
-   nodeUpdater.store(loc, null, internalNode.getEncodedValue());
+    nodeUpdater.store(loc, null, internalNode.getEncodedValue());
     internalNode.markClean();
     return internalNode;
   }
@@ -115,14 +115,6 @@ public class CommitVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K
    */
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
-    if (!valueNode.isDirty()) {
-      return valueNode;
-    }
-    if (valueNode.location.isEmpty()) {
-      throw new RuntimeException("Cannot persist node without location");
-    }
-    Bytes key = Bytes.wrap(valueNode.location.get().encode());
-    nodeUpdater.store(key, null, valueNode.getEncodedValue());
     valueNode.markClean();
     return valueNode;
   }
