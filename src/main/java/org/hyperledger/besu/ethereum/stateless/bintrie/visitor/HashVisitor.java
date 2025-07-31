@@ -142,6 +142,9 @@ public class HashVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, 
    */
   @Override
   public LeafNode<K, V> visit(ValueNode<K, V> valueNode) {
+    if (!valueNode.isDirty() && valueNode.commitment.isPresent()) {
+      return valueNode;
+    }
     Bytes32 valueSerialized = (Bytes32) valueNode.valueSerializer.apply(valueNode.value.get());
     Optional<Bytes32> newCommitment = Optional.of(hasher.hash(valueSerialized));
     // BitSequence<K> loc = valueNode.location.get();

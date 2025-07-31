@@ -34,6 +34,11 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
 public class FlattenVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
   @Override
   public Node<K, V> visit(InternalNode<K, V> internalNode) {
+
+    if (!internalNode.isDirty()) {
+      return internalNode;
+    }
+
     final Node<K, V> left = internalNode.left.accept(this);
     final Node<K, V> right = internalNode.right.accept(this);
 
@@ -62,6 +67,9 @@ public class FlattenVisitor<K extends BitSequence<K>, V> implements NodeVisitor<
 
   @Override
   public Node<K, V> visit(StemNode<K, V> stemNode) {
+    if (!stemNode.isDirty()) {
+      return stemNode;
+    }
     if (stemNode.allLeavesAreNull()) {
       return NullNode.node();
     }
