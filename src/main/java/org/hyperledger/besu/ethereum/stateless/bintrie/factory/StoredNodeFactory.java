@@ -184,7 +184,8 @@ public class StoredNodeFactory<K extends BitSequence<K>, V> implements NodeFacto
       int suffix = Byte.toUnsignedInt(encodedValues.get(cursor));
       V value = valueDeserializer.apply(encodedValues.slice(cursor + 1, 32));
       K loc = location.add(suffix, StemNode.maxChildWidth());
-      final ValueNode<K, V> valueNode = new ValueNode<>(Optional.of(loc), Optional.of(value));
+      final ValueNode<K, V> valueNode =
+          new ValueNode<>(Optional.of(loc), Optional.of(value), Optional.of(value));
       valueNode.markClean();
       children.set(suffix, valueNode);
       cursor += 33;

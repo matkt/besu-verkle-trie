@@ -147,10 +147,9 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   @Override
   public LeafNode<K, V> visit(final ValueNode<K, V> valueNode) {
     depth++;
-    if (!valueNode.isDirty()) {
-      oldValue = valueNode.value;
-    }
-    return new ValueNode<K, V>(valueNode.location, Optional.of(value), valueNode.valueSerializer);
+    oldValue = valueNode.isDirty() ? valueNode.previousValue : valueNode.value;
+    return new ValueNode<K, V>(
+        valueNode.location, oldValue, Optional.of(value), valueNode.valueSerializer);
   }
 
   /**
@@ -165,6 +164,7 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
     oldValue = Optional.empty();
     return new ValueNode<K, V>(
         Optional.of(path.slice(0, depth - 1).concatenate(path.slice(Node.STEM_SIZE))),
+        oldValue,
         Optional.of(value));
   }
 

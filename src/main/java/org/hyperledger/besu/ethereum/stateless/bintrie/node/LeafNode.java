@@ -30,11 +30,13 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public final Optional<V> value; // Value associated with the node
+  public final Optional<V> previousValue;
 
   /** Constructs a new Node with empty defaults. */
   public LeafNode() {
     super();
     value = Optional.empty();
+    previousValue = Optional.empty();
   }
 
   /**
@@ -45,6 +47,7 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
   public LeafNode(final Optional<K> location) {
     super(location);
     value = Optional.empty();
+    previousValue = Optional.empty();
   }
 
   /**
@@ -53,9 +56,11 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param location The location of the node in the trie.
    * @param value The node's value.
    */
-  public LeafNode(final Optional<K> location, final Optional<V> value) {
+  public LeafNode(
+      final Optional<K> location, final Optional<V> previousValue, final Optional<V> value) {
     super(location);
     this.value = value;
+    this.previousValue = previousValue;
   }
 
   /**
@@ -66,9 +71,13 @@ public abstract class LeafNode<K extends BitSequence<K>, V> extends Node<K, V> {
    * @param commitment The node's commitment
    */
   public LeafNode(
-      final Optional<K> location, final Optional<V> value, final Optional<Bytes32> commitment) {
+      final Optional<K> location,
+      final Optional<V> previousValue,
+      final Optional<V> value,
+      final Optional<Bytes32> commitment) {
     super(location, commitment);
     this.value = value;
+    this.previousValue = previousValue;
   }
 
   /**

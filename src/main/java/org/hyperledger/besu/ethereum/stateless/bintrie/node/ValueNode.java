@@ -39,7 +39,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @param location The location of the node in the tree.
    */
   public ValueNode(final Optional<K> location) {
-    super(location, Optional.empty());
+    super(location, Optional.empty(), Optional.empty());
     valueSerializer = val -> (Bytes) val;
   }
 
@@ -49,8 +49,9 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    * @param location The location of the node in the tree.
    * @param value The value associated with the node.
    */
-  public ValueNode(final Optional<K> location, final Optional<V> value) {
-    super(location, value);
+  public ValueNode(
+      final Optional<K> location, final Optional<V> previousValue, final Optional<V> value) {
+    super(location, previousValue, value);
     this.valueSerializer = val -> (Bytes) val;
   }
 
@@ -63,9 +64,10 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   public ValueNode(
       final Optional<K> location,
+      final Optional<V> previousValue,
       final Optional<V> value,
       final Function<V, Bytes> valueSerializer) {
-    super(location, value);
+    super(location, previousValue, value);
     this.valueSerializer = valueSerializer;
   }
 
@@ -80,9 +82,10 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
   public ValueNode(
       final Optional<K> location,
       final Optional<Bytes32> commitment,
+      final Optional<V> previousValue,
       final Optional<V> value,
       final Function<V, Bytes> valueSerializer) {
-    super(location, value, commitment);
+    super(location, previousValue, value, commitment);
     this.valueSerializer = valueSerializer;
   }
 
@@ -116,7 +119,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
    */
   @Override
   public ValueNode<K, V> replaceLocation(final K newLocation) {
-    return new ValueNode<K, V>(Optional.of(newLocation), value, valueSerializer);
+    return new ValueNode<K, V>(Optional.of(newLocation), previousValue, value, valueSerializer);
   }
 
   /**
@@ -130,7 +133,7 @@ public class ValueNode<K extends BitSequence<K>, V> extends LeafNode<K, V> {
     if (newCommitment.equals(commitment)) {
       return this;
     }
-    return new ValueNode<K, V>(location, newCommitment, value, valueSerializer);
+    return new ValueNode<K, V>(location, newCommitment, previousValue, value, valueSerializer);
   }
 
   /**
