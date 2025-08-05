@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.LeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
+import org.hyperledger.besu.ethereum.stateless.bintrie.pruning.StemPrunableNodeRegistry;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.CommitVisitor;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.FlattenVisitor;
 import org.hyperledger.besu.ethereum.stateless.bintrie.visitor.GetVisitor;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -39,11 +41,13 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param <V> The type of values in the Bin Trie.
  */
 public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V> {
+
+  private final StemPrunableNodeRegistry<K> stemPrunableNodeRegistry;
   protected Node<K, V> root;
 
   /** Creates a new Bin Trie with a null node as the root. */
   public SimpleBinTrie() {
-    this.root = NullNode.node();
+    this(NullNode.node());
   }
 
   /**
@@ -52,7 +56,7 @@ public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V>
    * @param root The root node of the Bin Trie.
    */
   public SimpleBinTrie(final Optional<Node<K, V>> root) {
-    this.root = root.orElse(NullNode.node());
+    this(root.orElse(NullNode.node()));
   }
 
   /**
@@ -62,6 +66,7 @@ public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V>
    */
   public SimpleBinTrie(final Node<K, V> root) {
     this.root = root;
+    this.stemPrunableNodeRegistry = new StemPrunableNodeRegistry<>();
   }
 
   /**
@@ -99,7 +104,7 @@ public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V>
   public Optional<V> put(final K key, final V value) {
     checkNotNull(key);
     checkNotNull(value);
-    final PutVisitor<K, V> kvPutVisitor = new PutVisitor<>(key, value);
+    final PutVisitor<K, V> kvPutVisitor = new PutVisitor<>(key, value, stemPrunableNodeRegistry);
     this.root = root.accept(kvPutVisitor);
     return kvPutVisitor.getOldValue();
   }
@@ -118,7 +123,7 @@ public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V>
   /** Restructure tree to get minimal representation. */
   @Override
   public void flatten() {
-    this.root = root.accept(new FlattenVisitor<K, V>());
+    this.root = root.accept(new FlattenVisitor<K, V>(stemPrunableNodeRegistry));
   }
 
   /**
@@ -128,7 +133,7 @@ public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V>
    */
   @Override
   public Bytes32 getRootHash() {
-    root = root.accept(new FlattenVisitor<K, V>());
+    root = root.accept(new FlattenVisitor<K, V>(stemPrunableNodeRegistry));
     root = root.accept(new HashVisitor<K, V>());
     assert root.commitment.isPresent() : "HashVisitor should produce a rootHash";
     return root.commitment.get();
@@ -152,6 +157,14 @@ public class SimpleBinTrie<K extends BitSequence<K>, V> implements BinTrie<K, V>
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
     getRootHash();
+    stemPrunableNodeRegistry
+        .getPrunableStems()
+        .forEach(
+            stem -> {
+              nodeUpdater.store(Bytes.wrap(stem.encode()), null, null);
+            });
+
+    stemPrunableNodeRegistry.clear();
     root = root.accept(new CommitVisitor<K, V>(nodeUpdater));
   }
 

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.InternalNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.Node;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
+import org.hyperledger.besu.ethereum.stateless.bintrie.pruning.StemPrunableNodeRegistry;
 
 /**
  * Class representing a visitor for flattening a node in a Trie tree.
@@ -32,6 +33,13 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
  * @param <V> The type of node values.
  */
 public class FlattenVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
+
+  private final StemPrunableNodeRegistry<K> stemPrunableNodeRegistry;
+
+  public FlattenVisitor(final StemPrunableNodeRegistry<K> stemPrunableNodeRegistry) {
+    this.stemPrunableNodeRegistry = stemPrunableNodeRegistry;
+  }
+
   @Override
   public Node<K, V> visit(InternalNode<K, V> internalNode) {
 
@@ -71,6 +79,7 @@ public class FlattenVisitor<K extends BitSequence<K>, V> implements NodeVisitor<
       return stemNode;
     }
     if (stemNode.allLeavesAreNull()) {
+      stemPrunableNodeRegistry.markPrunableStem(stemNode.stem);
       return NullNode.node();
     }
     return stemNode;

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullLeafNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.NullNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.StemNode;
 import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
+import org.hyperledger.besu.ethereum.stateless.bintrie.pruning.StemPrunableNodeRegistry;
 
 import java.util.Optional;
 
@@ -35,6 +36,9 @@ import java.util.Optional;
  * @param <V> The type of values to insert or update.
  */
 public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
+
+  private final StemPrunableNodeRegistry<K> stemPrunableNodeRegistry;
+
   public final K path;
   private Optional<V> oldValue;
   public final V value;
@@ -44,12 +48,16 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
    * Constructs a new PutVisitor with the provided value to insert or update.
    *
    * @param value The value to be inserted or updated in the Verkle Trie.
+   * @param stemPrunableNodeRegistry Tracker of stem to delete
    */
-  public PutVisitor(final K path, final V value) {
+  public PutVisitor(
+      final K path, final V value, final StemPrunableNodeRegistry<K> stemPrunableNodeRegistry) {
     assert path.length() <= Node.KEY_SIZE;
     this.path = path;
     this.value = value;
     this.oldValue = Optional.empty();
+    this.stemPrunableNodeRegistry = stemPrunableNodeRegistry;
+
     // System.out.println(String.format("PutVisit path=%s, value=%s",
     // Bytes.wrap(path.toBytes()),
     // value));
@@ -134,8 +142,9 @@ public class PutVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V
   public Node<K, V> visit(final NullNode<K, V> nullNode) {
     // System.out.println(String.format("Put visit Null: depth=%s, loc=%s, stem=%s", depth+1,
     // path.slice(0, depth+1).toHexString(), path.slice(0, Node.STEM_SIZE).toHexString()));
-    return new StemNode<K, V>(Optional.of(path.slice(0, depth + 1)), path.slice(0, Node.STEM_SIZE))
-        .accept(this);
+    final K stem = path.slice(0, Node.STEM_SIZE);
+    stemPrunableNodeRegistry.removePrunableStem(stem);
+    return new StemNode<K, V>(Optional.of(path.slice(0, depth + 1)), stem).accept(this);
   }
 
   /**
