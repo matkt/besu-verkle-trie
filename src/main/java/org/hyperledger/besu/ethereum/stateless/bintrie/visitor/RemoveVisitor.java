@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.stateless.bintrie.node.ValueNode;
  * @param <V> The type of node values.
  */
 public class RemoveVisitor<K extends BitSequence<K>, V> implements NodeVisitor<K, V> {
+
   public final K path;
   private int depth;
 
