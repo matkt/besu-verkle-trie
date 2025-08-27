@@ -55,7 +55,7 @@ public class SimpleBinTrieTest {
         .as("Get one value should be the inserted value")
         .isEqualTo(Optional.of(value));
     Bytes32 expectedRootHash =
-        Bytes32.fromHexString("0x951d42689548318da1121b320255387e6d7bb17c34f2ef4885af82596ad384ed");
+        Bytes32.fromHexString("0x3603e64c4d7b15c4f3fc6810432ddc99d7d9610be93d112f46e11dabff2a5f67");
     assertThat(trie.getRootHash()).as("Retrieve root hash").isEqualByComparingTo(expectedRootHash);
   }
 
@@ -97,7 +97,7 @@ public class SimpleBinTrieTest {
     assertThat(trie.get(key3)).as("Get non-key returns empty").isEmpty();
 
     Bytes32 expectedRootHash =
-        Bytes32.fromHexString("0xd0a463ba4288815c0ab1f5c6c4ba8c21a416983549dc8147d50ab3105d097050");
+        Bytes32.fromHexString("0xa273eb0473b281710f5da98fad94404e4d87861474a31a65ed4c487abdd1cca8");
     assertThat(trie.getRootHash()).as("Get root hash").isEqualByComparingTo(expectedRootHash);
   }
 
@@ -120,7 +120,7 @@ public class SimpleBinTrieTest {
     assertThat(trie.get(key1).get()).as("Get first value").isEqualByComparingTo(value1);
     assertThat(trie.get(key2).get()).as("Get second value").isEqualByComparingTo(value2);
     Bytes32 expectedRootHash =
-        Bytes32.fromHexString("0x68c411009ff23a134bd625459125bebb0347262e0a880aa8de37bd255edb77ac");
+        Bytes32.fromHexString("0x1894517bf7f9b6b27f69a856e649ce1e968cd984937453cfd37d89fd09d9e036");
     assertThat(hash).as("Retrieve root hash").isEqualByComparingTo(expectedRootHash);
   }
 
@@ -142,7 +142,7 @@ public class SimpleBinTrieTest {
     assertThat(trie.get(key1)).as("Retrieve first value").isEqualTo(Optional.of(value1));
     assertThat(trie.get(key2)).as("Retrieve second value").isEqualTo(Optional.of(value2));
     Bytes32 expectedRootHash =
-        Bytes32.fromHexString("0xb5aa9c1591c7a6422ec7f68d9dc69e91bf3b135eedb929f3164802a62ef1b1c8");
+        Bytes32.fromHexString("0x828e79f4fd932a77e73c49d18bb872d887a4ae43ae3bd18c0788bced2cbe0ea9");
     assertThat(trie.getRootHash()).as("Retrieve root hash").isEqualByComparingTo(expectedRootHash);
   }
 
