@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.bouncycastle.crypto.digests.Blake3Digest;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
 /** Class for Hashing values. */
@@ -30,7 +29,7 @@ public class Hasher {
   public Hasher() {}
 
   public Bytes32 hash(final Bytes32 value) {
-    final SHA256Digest digest = new SHA256Digest();
+    final SHA256Digest digest = getDigest();
     digest.update(value.toArrayUnsafe(), 0, value.size());
     final byte[] dig = new byte[digest.getDigestSize()];
     digest.doFinal(dig, 0);
@@ -47,7 +46,7 @@ public class Hasher {
     if (leftValue == Node.EMPTY_COMMITMENT && rightValue == Node.EMPTY_COMMITMENT) {
       return Node.EMPTY_COMMITMENT;
     }
-    final Blake3Digest digest = new Blake3Digest(Node.COMMITMENT_SIZE);
+    final SHA256Digest digest = getDigest();
     final byte[] rawDigest = new byte[digest.getDigestSize()];
     digest.reset();
     digest.update(leftValue.toArray(), 0, leftValue.size());
@@ -56,5 +55,9 @@ public class Hasher {
     Bytes32 result = (Bytes32) Bytes.of(rawDigest);
     digest.reset();
     return result;
+  }
+
+  private SHA256Digest getDigest() {
+    return new SHA256Digest();
   }
 }
