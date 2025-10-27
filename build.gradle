@@ -65,6 +65,7 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.hyperledger.besu.internal:rlp'
   implementation 'org.hyperledger.besu.internal:trie'
+  implementation 'org.bouncycastle:bcprov-jdk18on'
 
 
   testImplementation 'org.mockito:mockito-core'
