@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.stateless.bintrie.pruning;
 
 import org.hyperledger.besu.ethereum.stateless.bintrie.BitSequence;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Registry responsible for tracking {@code StemNode} stems that are eligible for pruning.
@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class StemPrunableNodeRegistry<K extends BitSequence<K>> {
 
-  private final List<K> prunableStems = new ArrayList<>();
+  private final Set<K> prunableStems = new HashSet<>();
 
   /** Creates a new registry for tracking prunable stem nodes. */
   public StemPrunableNodeRegistry() {}
@@ -59,7 +59,7 @@ public class StemPrunableNodeRegistry<K extends BitSequence<K>> {
    *
    * @return list of stems eligible for pruning
    */
-  public List<K> getPrunableStems() {
+  public Set<K> getPrunableStems() {
     return prunableStems;
   }
 
