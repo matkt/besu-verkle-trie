@@ -55,9 +55,9 @@ public class StemPrunableNodeRegistry<K extends BitSequence<K>> {
   }
 
   /**
-   * Returns the list of all stems currently marked as prunable.
+   * Returns the set of all stems currently marked as prunable.
    *
-   * @return list of stems eligible for pruning
+   * @return set of stems eligible for pruning
    */
   public Set<K> getPrunableStems() {
     return prunableStems;
